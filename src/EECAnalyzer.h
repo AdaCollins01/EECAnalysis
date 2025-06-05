@@ -36,7 +36,7 @@ class EECAnalyzer{
   
 private:
   
-  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsSystematics, kFillJetPtClosure, kFillJetPtUnfoldingResponse, kFillTrackParticleMatchingHistograms, knFillTypes}; // Histograms to fill
+  enum enumFilledHistograms{kFillEventInformation, kFillJets, kFillTracks, kFillJetConeHistograms, kFillEnergyEnergyCorrelators, kFillEnergyEnergyCorrelatorsSystematics, kFillEnergyEnergyEnergyCorrelators, kFillJetPtClosure, kFillJetPtUnfoldingResponse, kFillTrackParticleMatchingHistograms, knFillTypes}; // Histograms to fill
   enum enumSubeventCuts{kSubeventZero,kSubeventNonZero,kSubeventAny,knSubeventCuts}; // Cuts for subevent index
   enum enumMcCorrelationType{kRecoReco,kRecoGen,kGenReco,kGenGen,knMcCorrelationTypes}; // How to correlate jets and tracks in MC
   enum enumUnfoldingLevel{kUnfoldingReconstructed, kUnfoldingTruth, kNUnfoldingAxes}; // Select the axis on unfolding response matrix
@@ -60,6 +60,7 @@ public:
   
   // Private methods
   void CalculateEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt);  // Calculate energy-energy correlators
+  void CalculateEnergyEnergyEnergyCorrelator(const vector<double> selectedTrackPt[EECHistograms::knJetConeTypes], const vector<double> relativeTrackEta[EECHistograms::knJetConeTypes], const vector<double> relativeTrackPhi[EECHistograms::knJetConeTypes], const vector<int> selectedTrackSubevent[EECHistograms::knJetConeTypes], const double jetPt);  // Calculate energy-energy-energy correlators
   void CalculateEnergyEnergyCorrelatorForUnfolding(const vector<double> selectedTrackPt, const vector<double> relativeTrackEta, const vector<double> relativeTrackPhi, const double jetPt, const double genPt); // Calculate energy-energy correlators for unfolding
   void FillOneDimensionalJetPtUnfoldingHistograms(const double jetPt, const double genPt); // Fill histograms for one dimensional jet pT unfolding
   void FillJetPtResponseMatrix(const Int_t jetIndex); // Fill jet pT response matrix
@@ -207,6 +208,7 @@ public:
   Bool_t fFillJetConeHistograms;                  // Fill particle multiplicity and density histograms around the jet cone
   Bool_t fFillEnergyEnergyCorrelators;            // Fill energy-energy correlator histograms
   Bool_t fFillEnergyEnergyCorrelatorsSystematics; // Fill energy-energy correlator histograms for systematic uncertainty analysis
+  Bool_t fFillEnergyEnergyEnergyCorrelators;      // Fill energy-energy-energy correlator histograms (RL, RM, and RS - make separate flags?)
   Bool_t fFillJetPtClosure;                       // Fill jet pT closure histograms
   Bool_t fFillJetPtUnfoldingResponse;             // Fill the jet pT unfolding response
   Bool_t fFillTrackParticleMatchingHistograms;    // Fill the matching histograms between particles and tracks
