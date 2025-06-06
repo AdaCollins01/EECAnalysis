@@ -4572,13 +4572,21 @@ void EECHistogramManager::SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationM
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyCorrelatorPairEfficiencyVariationMinus] = loadOrNot;
 } 
 
+// Setter for loading energy-energy-energy correlators (RL, RM, and RS - not separated currently)
+void EECHistogramManager::SetLoadEnergyEnergyEnergyCorrelators(const bool loadOrNot){
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRL] = loadOrNot;
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRM] = loadOrNot;
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRS] = loadOrNot;
+}
+
 // Setter for loading all energy-energy correlators
-void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus, const bool loadPairEfficiencyVariationPlus, const bool loadPairEfficiencyVariationMinus){
+void EECHistogramManager::SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus, const bool loadPairEfficiencyVariationPlus, const bool loadPairEfficiencyVariationMinus, const bool loadEnergyEnergyEnergy){
   SetLoadEnergyEnergyCorrelators(loadRegular);
   SetLoadEnergyEnergyCorrelatorsEfficiencyVariationPlus(loadEfficiencyVariationPlus);
   SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadEfficiencyVariationMinus);
   SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(loadPairEfficiencyVariationPlus);
   SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(loadPairEfficiencyVariationMinus);
+  SetLoadEnergyEnergyEnergyCorrelators(loadEnergyEnergyEnergy); // Loads RL, RM, and RS
 }
 
 // Setter for loading reflected cone QA histograms

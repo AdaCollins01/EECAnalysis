@@ -41,7 +41,7 @@ public:
   enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, knMaxParticlePtWithinJetConeTypes};
   
   // Indices for different energy-energy correlator categories
-  enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorEfficiencyVariationPlus, kEnergyEnergyCorrelatorEfficiencyVariationMinus, kEnergyEnergyCorrelatorPairEfficiencyVariationPlus, kEnergyEnergyCorrelatorPairEfficiencyVariationMinus, knEnergyEnergyCorrelatorTypes};
+  enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorEfficiencyVariationPlus, kEnergyEnergyCorrelatorEfficiencyVariationMinus, kEnergyEnergyCorrelatorPairEfficiencyVariationPlus, kEnergyEnergyCorrelatorPairEfficiencyVariationMinus, kEnergyEnergyEnergyCorrelatorRL, kEnergyEnergyEnergyCorrelatorRM, kEnergyEnergyEnergyCorrelatorRS, knEnergyEnergyCorrelatorTypes}; // Added indices for E3C RL, RM, RS 
   
   // Indices for different energy-energy correlator processing levels
   enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, kEnergyEnergyCorrelatorUnfolded, kEnergyEnergyCorrelatorBackgroundAfterUnfolding, kEnergyEnergyCorrelatorUnfoldedSignal, knEnergyEnergyCorrelatorProcessingLevels};
@@ -86,8 +86,8 @@ private:
   const char* fParticleDensityAroundJetsAxisNames[knParticleDensityAroundJetAxisTypes] = {"#rho(N_{ch})", "#rho(p_{T}^{ch})", "#rho(N_{ch})", "#rho(p_{T}^{ch})"};
   
   // Naming for energy-energy correlator histograms
-  const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorEfficiencyVariationPlus", "energyEnergyCorrelatorEfficiencyVariationMinus", "energyEnergyCorrelatorPairEfficiencyVariationPlus", "energyEnergyCorrelatorPairEfficiencyVariationMinus"};
-  const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC efficiency variation +", "EEC efficiency variation -", "EEC pair eff variation +", "EEC pair edd variation -"};
+  const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorEfficiencyVariationPlus", "energyEnergyCorrelatorEfficiencyVariationMinus", "energyEnergyCorrelatorPairEfficiencyVariationPlus", "energyEnergyCorrelatorPairEfficiencyVariationMinus", "energyEnergyEnergyCorrelatorRL", "energyEnergyEnergyCorrelatorRM", "energyEnergyEnergyCorrelatorRS"}; // Added names for E3C
+  const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC efficiency variation +", "EEC efficiency variation -", "EEC pair eff variation +", "EEC pair edd variation -", "EEEC RL", "EEEC RM", "EEEC RS"}; //Added names for E3C
   const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal", "Unfolded", "BackgroundAfterUnfolding", "UnfoldedSignal"};
 
   // Naming for reflected cone QA histograms
@@ -178,8 +178,9 @@ public:
   void SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(const bool loadOrNot); // Setter for loading energy-energy correlators with negative track efficiency variation 
   void SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(const bool loadOrNot);  // Setter for loading energy-energy correlators with positive track pair efficiency variation 
   void SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(const bool loadOrNot); // Setter for loading energy-energy correlators with negative track pair efficiency variation 
-  void SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus, const bool loadPairEfficiencyVariationPlus, const bool loadPairEfficiencyVariationMinus); // Setter for loading all energy-energy correlators
+  void SetLoadAllEnergyEnergyCorrelators(const bool loadRegular, const bool loadEfficiencyVariationPlus, const bool loadEfficiencyVariationMinus, const bool loadPairEfficiencyVariationPlus, const bool loadPairEfficiencyVariationMinus, const bool loadEnergyEnergyEnergy); // Setter for loading all energy-energy correlators
   void SetLoadOnlyUnfoldedSignal(const bool loadOrNot);  // Setter for loading only unfolded signals for energy-energy correlators
+  void SetLoadEnergyEnergyEnergyCorrelators(const bool loadOrNot);                         // Setter for loading energy-energy-energy correlators (RL, RM, and RS - currently not separate options)
   
   // Setters for reflected cone QA
   void SetLoadReflectedConeQAHistograms(const bool loadOrNot);

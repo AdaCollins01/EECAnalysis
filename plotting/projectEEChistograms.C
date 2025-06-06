@@ -38,6 +38,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
   bool loadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus = false;
+  bool loadEnergyEnergyEnergyCorrelators = true; // Loads E3C for RL, RM, RS
   bool loadJetPtClosure = false;
   bool loadJetPtResponseMatrix = false;
   bool loadJetPtUnfoldingHistograms = false;
@@ -57,7 +58,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
    *  Bit 5 = Load particle density histograms around jet axes (to set: 32)
    *  Bit 6 = Load particle pT density histograms around jet axes (to set: 64)
    *  Bit 7 = Load maximum particle pT within the jet cone histograms (to set: 128)
-   *  Bit 8 = Load energy-energy correlator histograms (to set: 256)
+   *  Bit 8 = Load energy-energy correlator histograms (to set: 256) - and E3C
    *  Bit 9 = Load energy-energy correlator histograms with track efficiency variations (to set: 512)
    *  Bit 10 = Load energy-energy correlator histograms with track pair efficiency variation (to set: 1024)
    *  Bit 11 = Load jet pT closure histograms (to set: 2048)
@@ -78,6 +79,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
     loadParticlePtDensityAroundJet = bitChecker.test(6);
     loadMaxParticlePtWithinJetCone = bitChecker.test(7);
     loadEnergyEnergyCorrelators = bitChecker.test(8);
+    loadEnergyEnergyEnergyCorrelators = bitChecker.test(8); // Loads E2C and E3C
     loadEnergyEnergyCorrelatorsEfficiencyVariationPlus = bitChecker.test(9);
     loadEnergyEnergyCorrelatorsEfficiencyVariationMinus = bitChecker.test(9);
     loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = bitChecker.test(10);
@@ -221,6 +223,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadEnergyEnergyCorrelatorsEfficiencyVariationMinus);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(loadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
+  histograms->SetLoadEnergyEnergyEnergyCorrelators(loadEnergyEnergyEnergyCorrelators); // Loads RL, RM, RS
   histograms->SetLoad2DHistograms(true);
   histograms->SetLoadJetPtClosureHistograms(loadJetPtClosure);
   histograms->SetLoadJetPtResponseMatrix(loadJetPtResponseMatrix);
