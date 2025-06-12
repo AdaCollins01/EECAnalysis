@@ -38,7 +38,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   bool loadEnergyEnergyCorrelatorsEfficiencyVariationMinus = false;
   bool loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus = false;
   bool loadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus = false;
-  bool loadEnergyEnergyEnergyCorrelators = true; // Loads E3C for RL, RM, RS
+  bool loadEnergyEnergyEnergyCorrelators = true; // Loads E3C for RL, RM, RS, and full
   bool loadJetPtClosure = false;
   bool loadJetPtResponseMatrix = false;
   bool loadJetPtUnfoldingHistograms = false;
@@ -223,7 +223,7 @@ void projectEEChistograms(TString inputFileName = "veryCoolData.root", const cha
   histograms->SetLoadEnergyEnergyCorrelatorsEfficiencyVariationMinus(loadEnergyEnergyCorrelatorsEfficiencyVariationMinus);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus(loadEnergyEnergyCorrelatorsPairEfficiencyVariationPlus);
   histograms->SetLoadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus(loadEnergyEnergyCorrelatorsPairEfficiencyVariationMinus);
-  histograms->SetLoadEnergyEnergyEnergyCorrelators(loadEnergyEnergyEnergyCorrelators); // Loads RL, RM, RS
+  histograms->SetLoadEnergyEnergyEnergyCorrelators(loadEnergyEnergyEnergyCorrelators); // Loads RL, RM, RS, and full
   histograms->SetLoad2DHistograms(true);
   histograms->SetLoadJetPtClosureHistograms(loadJetPtClosure);
   histograms->SetLoadJetPtResponseMatrix(loadJetPtResponseMatrix);

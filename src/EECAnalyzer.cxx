@@ -2222,6 +2222,7 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
   Double_t fillerEnergyEnergyEnergyCorrelatorRL[7];       // Axes: RL, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerEnergyEnergyEnergyCorrelatorRM[7];       // Axes: RM, Jet pT, lower track pT, centrality, pairing type, subevent
   Double_t fillerEnergyEnergyEnergyCorrelatorRS[7];       // Axes: RS, Jet pT, lower track pT, centrality, pairing type, subevent
+  Double_t fillerEnergyEnergyEnergyCorrelatorFull[8];     // Axes: x, y, Jet pT, lower track pT, centrality, pairing type, subevent - maybe the 8 dimensions will mess things up later but hey that's okay
   //Double_t fillerParticleDeltaRResponseMatrix[5]; // Filler for validating deltaR smearing
   //Double_t fillerParticlePtResponseMatrix[7];     // Filler for validating particle pT smearing
   
@@ -2253,6 +2254,11 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
   Double_t RL;		   // Longest distance between tracks
   Double_t RM;		   // Medium distance between tracks
   Double_t RS;		   // Shortest distance between tracks
+  Double_t projRL;	   // RL' = RL/RL = 1 for projection
+  Double_t projRM;	   // Medium distance, normalized by RL
+  Double_t projRS;	   // Shortest distance, normalized by RL
+  Double_t xCoord;	   // x-coordinate for projection
+  Double_t yCoord;	   // y-coordinate for projection
   Double_t lowerTrackPt;   // Lower of the two track pT:s
   Double_t correlatorWeight;            // Weight given to the energy-energy correlator pT1*pT2
   Int_t subeventTrack1;    // Subevent index for the first track (0 = pythia, > 0 = hydjet)
@@ -2339,39 +2345,41 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
 
 	// Find the subevent type based on the subevents of the tracks (only relevant for simulation)
         subeventCombination = GetSubeventCombination(subeventTrack1, subeventTrack2);
-        
-        // Find the deltaR between the tracks
-        RL = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
-	RM = RL;
-	RS = 0.0; // Degenerate triangle RS is collapsed, leaving RM = RL
 
-	// Get lower pT
-	lowerTrackPt = trackPt1;
-        if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
-
-	  // Start with the pTa^2 * pTb case
-          correlatorWeight = trackPt1*trackPt1*trackPt2; 
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-
-	if(fFillEnergyEnergyEnergyCorrelators){
-            fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
-            fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
-            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for AAB, ABA, BAA   
-	  }
-
-	  // Repeat for the pTb^2 * pTa case
-          correlatorWeight = trackPt1*trackPt2*trackPt2; 
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-
-	if(fFillEnergyEnergyEnergyCorrelators){
-            fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
-            fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
-            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for BBA, BAB, ABB   
-	  }
+	// Commented out because we only want unique triplets right now - add in a boolean if we continue pursuing
+	
+//        // Find the deltaR between the tracks
+//        RL = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
+//	RM = RL;
+//	RS = 0.0; // Degenerate triangle RS is collapsed, leaving RM = RL
+//
+//	// Get lower pT
+//	lowerTrackPt = trackPt1;
+//        if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
+//
+//	  // Start with the pTa^2 * pTb case
+//          correlatorWeight = trackPt1*trackPt1*trackPt2; 
+//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+//
+//	if(fFillEnergyEnergyEnergyCorrelators){
+//            fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
+//            fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
+//            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for AAB, ABA, BAA   
+//	  }
+//
+//	  // Repeat for the pTb^2 * pTa case
+//          correlatorWeight = trackPt1*trackPt2*trackPt2; 
+//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+//
+//	if(fFillEnergyEnergyEnergyCorrelators){
+//            fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
+//            fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
+//            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for BBA, BAB, ABB   
+//	  }
 	
 	// Loop over the third track so we can include ABC case
 	for(Int_t iThirdTrack = iSecondTrack + 1; iThirdTrack < nTracks3; iThirdTrack++){ // Index for doublecounting
@@ -2403,6 +2411,14 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
 	RM = dRs[1];
 	RL = dRs[2];
 
+	// Calculate (x, y) for projection
+	projRL = 1; // 1 = RL / RL
+	projRM = RM / RL;
+	projRS = RS / RL; 
+	
+	xCoord = (1 - (projRS * projRS) + (projRM * projRM)) / 2;
+	yCoord = TMath::Sqrt((projRM * projRM) - (xCoord * xCoord));
+
 	// Find the lowest of the three track pT:s
         lowerTrackPt = trackPt1;
         if(trackPt2 < trackPt1 && trackPt2 < trackPt3){
@@ -2430,10 +2446,21 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
 	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
 	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
 
+	  // Fill the full energy-energy-energy correlators - separately because it has an extra axis
+	  fillerEnergyEnergyEnergyCorrelatorFull[0] = xCoord;               // Axis 0: x-coordinate for projected plane
+	  fillerEnergyEnergyEnergyCorrelatorFull[1] = yCoord;		    // Axis 1: y-coordinate for projected plane
+          fillerEnergyEnergyEnergyCorrelatorFull[2] = jetPt;                // Axis 2: pT of the jet the tracks are near of
+          fillerEnergyEnergyEnergyCorrelatorFull[3] = lowerTrackPt;         // Axis 3: Lower of the two track pT:s
+          fillerEnergyEnergyEnergyCorrelatorFull[4] = centrality;           // Axis 4: Event centrality
+          fillerEnergyEnergyEnergyCorrelatorFull[5] = iPairingType;         // Axis 5: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
+          fillerEnergyEnergyEnergyCorrelatorFull[6] = subeventCombination;  // Axis 6: Subevent combination type
+          fillerEnergyEnergyEnergyCorrelatorFull[7] = weightIndex;          // Axis 7: Inxed for the current energy-energy correlator weight
+
 	if(fFillEnergyEnergyEnergyCorrelators){
             fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 6); 
             fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 6);  
             fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 6); // Weighted x6 to account for ABC, ACB, BAC, BCA, CAB, CBA - could also have done this x2, and above x1
+            fHistograms->fhEnergyEnergyEnergyCorrelatorFull->Fill(fillerEnergyEnergyEnergyCorrelatorFull, fTotalEventWeight * correlatorWeight * 6); 
 	  }
 	    // Deleted covariance matrix information and systematics stuff and also efficiency stuff
 

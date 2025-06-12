@@ -41,7 +41,7 @@ public:
   enum enumMaxParticlePtWithinJetConeType{kMaxSignalParticlePt, kMaxBackgroundParticlePt, knMaxParticlePtWithinJetConeTypes};
   
   // Indices for different energy-energy correlator categories
-  enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorEfficiencyVariationPlus, kEnergyEnergyCorrelatorEfficiencyVariationMinus, kEnergyEnergyCorrelatorPairEfficiencyVariationPlus, kEnergyEnergyCorrelatorPairEfficiencyVariationMinus, kEnergyEnergyEnergyCorrelatorRL, kEnergyEnergyEnergyCorrelatorRM, kEnergyEnergyEnergyCorrelatorRS, knEnergyEnergyCorrelatorTypes}; // Added indices for E3C RL, RM, RS 
+  enum enumEnergyEnergyCorrelators{kEnergyEnergyCorrelator, kEnergyEnergyCorrelatorEfficiencyVariationPlus, kEnergyEnergyCorrelatorEfficiencyVariationMinus, kEnergyEnergyCorrelatorPairEfficiencyVariationPlus, kEnergyEnergyCorrelatorPairEfficiencyVariationMinus, kEnergyEnergyEnergyCorrelatorRL, kEnergyEnergyEnergyCorrelatorRM, kEnergyEnergyEnergyCorrelatorRS, kEnergyEnergyEnergyCorrelatorFull, knEnergyEnergyCorrelatorTypes}; // Added indices for E3C RL, RM, RS, Full 
   
   // Indices for different energy-energy correlator processing levels
   enum enumEnergyEnergyCorrelatorProcessing{kEnergyEnergyCorrelatorNormalized, kEnergyEnergyCorrelatorBackground, kEnergyEnergyCorrelatorSignal, kEnergyEnergyCorrelatorUnfolded, kEnergyEnergyCorrelatorBackgroundAfterUnfolding, kEnergyEnergyCorrelatorUnfoldedSignal, knEnergyEnergyCorrelatorProcessingLevels};
@@ -86,8 +86,8 @@ private:
   const char* fParticleDensityAroundJetsAxisNames[knParticleDensityAroundJetAxisTypes] = {"#rho(N_{ch})", "#rho(p_{T}^{ch})", "#rho(N_{ch})", "#rho(p_{T}^{ch})"};
   
   // Naming for energy-energy correlator histograms
-  const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorEfficiencyVariationPlus", "energyEnergyCorrelatorEfficiencyVariationMinus", "energyEnergyCorrelatorPairEfficiencyVariationPlus", "energyEnergyCorrelatorPairEfficiencyVariationMinus", "energyEnergyEnergyCorrelatorRL", "energyEnergyEnergyCorrelatorRM", "energyEnergyEnergyCorrelatorRS"}; // Added names for E3C
-  const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC efficiency variation +", "EEC efficiency variation -", "EEC pair eff variation +", "EEC pair edd variation -", "EEEC RL", "EEEC RM", "EEEC RS"}; //Added names for E3C
+  const char* fEnergyEnergyCorrelatorHistogramNames[knEnergyEnergyCorrelatorTypes] = {"energyEnergyCorrelator", "energyEnergyCorrelatorEfficiencyVariationPlus", "energyEnergyCorrelatorEfficiencyVariationMinus", "energyEnergyCorrelatorPairEfficiencyVariationPlus", "energyEnergyCorrelatorPairEfficiencyVariationMinus", "energyEnergyEnergyCorrelatorRL", "energyEnergyEnergyCorrelatorRM", "energyEnergyEnergyCorrelatorRS", "energyEnergyEnergyCorrelatorFull"}; // Added names for E3C
+  const char* fEnergyEnergyCorrelatorAxisNames[knEnergyEnergyCorrelatorTypes] = {"EEC", "EEC efficiency variation +", "EEC efficiency variation -", "EEC pair eff variation +", "EEC pair edd variation -", "EEEC RL", "EEEC RM", "EEEC RS", "EEEC Full"}; //Added names for E3C
   const char* fEnergyEnergyCorrelatorProcessedSaveString[knEnergyEnergyCorrelatorProcessingLevels] = {"Normalized", "Background", "Signal", "Unfolded", "BackgroundAfterUnfolding", "UnfoldedSignal"};
 
   // Naming for reflected cone QA histograms
@@ -380,6 +380,7 @@ private:
   bool fLoadParticleDensityAroundJetsHistograms[knParticleDensityAroundJetAxisTypes];  // Load the particle density histograms around the jet axis
   bool fLoadMaxParticlePtWithinJetConeHistograms;          // Load the maximum particle pT within the jet cone histograms
   bool fLoadEnergyEnergyCorrelatorHistograms[knEnergyEnergyCorrelatorTypes];   // Load the energy-energy correlator histograms
+  bool fLoadEnergyEnergyEnergyCorrelatorFullHistograms[knEnergyEnergyCorrelatorTypes];   // Load the full energy-energy-energy correlator 2D-histogram
   bool fLoadReflectedConeQAHistograms;                     // Load the reflected cone QA histograms
   bool fLoadJetPtUnfoldingHistograms;                      // Load the histograms needed in jet pT unfolding study
   bool fLoadJetPtUnfoldingCovariance;                      // Load the covariance distribution for unfolding
@@ -463,7 +464,7 @@ private:
   // Histograms for energy-energy correlators
   TH1D* fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw correlators read from data file
   TH1D* fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed energy-energy correlators
-
+  
   // Quality assurance histograms for reflected cone
   TH1D* fhNumberOfJetsWithinReflectedCone[kMaxCentralityBins];
   TH1D* fhJetPtWithinReflectedCone[kMaxCentralityBins];
@@ -512,6 +513,7 @@ private:
   void LoadParticleDensityHistograms(); // Loader for particle density histograms around the jet cone
   void LoadMaxParticlePtInJetConeHistograms(); // Loader for maximum particle pT in jet cone histograms
   void LoadEnergyEnergyCorrelatorHistograms(); // Loader for energy-energy correlator histograms
+  void LoadEnergyEnergyEnergyCorrelatorFullHistograms(); // Loader for full energy-energy-energy correlator 2D-histogram
   void LoadReflectedConeQAHistograms();        // Loader for reflected cone QA histograms
   void LoadJetPtResponseMatrix();    // Loader for the jet pT response matrices
   void LoadJetPtClosureHistograms(); // Loader for jet pT closure histograms
