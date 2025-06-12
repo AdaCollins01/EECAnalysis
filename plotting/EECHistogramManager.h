@@ -304,6 +304,10 @@ public:
   TH1D* GetHistogramEnergyEnergyCorrelator(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations);  // Energy-energy correlator histograms
   TH1D* GetHistogramEnergyEnergyCorrelatorProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel);  // Processed energy-energy correlator histograms
 
+  // Getters for full energy-energy-energy correlator histograms
+  TH2D* GetHistogramEnergyEnergyEnergyCorrelatorFull(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iPairingType = EECHistograms::kSameJetPair, const int iSubevent = EECHistograms::knSubeventCombinations);  // F energy-energy-energy correlator histograms
+  TH2D* GetHistogramEnergyEnergyEnergyCorrelatorFullProcessed(const int iEnergyEnergyCorrelatorType, const int iCentrality, const int iJetPt, const int iTrackPt, const int iProcessingLevel);  // Processed full energy-energy-energy correlator histograms
+  
   // Getters for reflected cone QA histograms
   TH1D* GetHistogramNumberOfJetsWithinReflectedCone(const int iCentrality);
   TH1D* GetHistogramJetPtWithinReflectedCone(const int iCentrality);
@@ -464,6 +468,8 @@ private:
   // Histograms for energy-energy correlators
   TH1D* fhEnergyEnergyCorrelator[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw correlators read from data file
   TH1D* fhEnergyEnergyCorrelatorProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed energy-energy correlators
+  TH2D* fhEnergyEnergyEnergyCorrelatorFull[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][EECHistograms::knPairingTypes][EECHistograms::knSubeventCombinations+1];  // Raw E3C read from data file
+  TH2D* fhEnergyEnergyEnergyCorrelatorFullProcessed[knEnergyEnergyCorrelatorTypes][kMaxCentralityBins][kMaxJetPtBinsEEC][kMaxTrackPtBinsEEC][knEnergyEnergyCorrelatorProcessingLevels];   // Postprocessed E3C full correlators
   
   // Quality assurance histograms for reflected cone
   TH1D* fhNumberOfJetsWithinReflectedCone[kMaxCentralityBins];
