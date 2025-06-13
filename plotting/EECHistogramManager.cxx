@@ -1844,8 +1844,8 @@ void EECHistogramManager::LoadEnergyEnergyEnergyCorrelatorFullHistograms(){
   int weightRestricted = 0;
   THnSparseD* histogramArray;
 
-  // Loop over all different energy-energy correlator histograms
-  for(int iEnergyEnergyCorrelatorType = knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){ // Bounds only include eeecFull 
+  // Loop over all different energy-energy-energy correlator histograms
+  for(int iEnergyEnergyCorrelatorType = knEnergyEnergyCorrelatorTypes - 1; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){ // Bounds only include eeecFull 
     if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;  // Only load the selected energy-energy correlators
 
     // For track pT bins, we are looking at all the tracks above the lower threshold
