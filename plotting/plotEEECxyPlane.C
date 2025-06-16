@@ -1,16 +1,14 @@
 #include "EECHistogramManager.h" R__LOAD_LIBRARY(plotting/DrawingClasses.so)
 #include "EECCard.h"
 #include "JDrawer.h"
+#include "../src/EECHistograms.h"
 
 /*
- * Macro for finding background normalization scale in MC. This is done by integrating the energy-energy correlator distributions for background within the signal cone, and in the reflected cone, and taking a ratio of these numbers.
+ * Macro for plotting distribution of E3C, projected into xy coordinates. 
  */
 void plotEEECxyPlane(){
 
-  // Enumeration for projection direction
-  enum enumProjectionType{kConstantGen, kConstantReco, knProjectionTypes};
-
-  // File from which the integrals are calculated
+  // File from which the E3C are read
   TString inputFileName = "projected_xyPlaneTest_06122025.root";
   
   // Open the input file
@@ -23,101 +21,105 @@ void plotEEECxyPlane(){
     return;
   }
   
-  // Load the card from the file and read the collision system
+  // Load the card from the file
   EECCard* card = new EECCard(inputFile);
-  TString collisionSystem = card->GetDataType();
-  bool isPbPbData = collisionSystem.Contains("PbPb");
   
   // ====================================================
-  //  Binning configuration for the integral calculation
+  //  Binning configuration for the plotting
   // ====================================================
   
-  // Find the number of bins from the card
-  const int nCentralityBins = (isPbPbData) ? card->GetNCentralityBins() : 1;
-  const int nAnalysisJetPtBins = 4;
-  
-  // Default binning ranges for reference
-  // centrality = {0,10,30,50,90}
+  // Number of bins from the card
+  const int nCentralityBinsEEC = card->GetNCentralityBins();
+  const int nJetPtBinsEEC = card->GetNJetPtBinsEEC();
+  const int nTrackPtBinsEEC = card->GetNTrackPtBinsEEC();
 
-  const double analysisJetPtBinBorders[nAnalysisJetPtBins+1] = {120,140,160,180,200};
-    
+  cout << "Jet pT Bins: " << nJetPtBinsEEC << endl;
+  cout << "Track pT Bins: " << nTrackPtBinsEEC << endl;
+  cout << "Centrality Bins: " << nCentralityBinsEEC << endl;
+
+  cout << "Available Centrality Bin: " << EECCard::kCentralityBinEdges << endl;
+
+  // Bin vectors - start with one 
+  std::vector<std::pair<double,double>> comparedCentralityBin; // Maybe don't want centrality? Because it's pp?
+  comparedCentralityBin.push_back(std::make_pair(-1,100));
+
+  std::vector<std::pair<double,double>> comparedJetPtBin;
+  comparedJetPtBin.push_back(std::make_pair(120,140));
+
+  std::vector<double> comparedTrackPtBin;
+  comparedTrackPtBin.push_back(1.0);
+
   // Create and setup a new histogram manager to project and handle the histograms
-  EECHistogramManager* histograms = new EECHistogramManager(inputFile,card);
+  EECHistogramManager* histograms = new EECHistogramManager(inputFile,card); // Should already know what to do
   
-  // Choose the energy-energy correlator types to load
-  histograms->SetLoadEnergyEnergyEnergyCorrelators(true);
+  int iJetPt, iTrackPt, iCentrality;
+  int iEnergyEnergyCorrelatorType = EECHistogramManager::kEnergyEnergyEnergyCorrelatorFull;
+  int iPairingType = EECHistograms::kSameJetPair;
+  int iSubevent = EECHistograms::kPythiaPythia;
+ 
+  // Initialize the jet response matrices to NULL
+  //TH2D* hEnergyEnergyEnergyCorrelatorFull[nJetPtBinsEEC][nTrackPtBinsEEC];
+  TH2D* hEnergyEnergyEnergyCorrelatorFull[comparedJetPtBin.size()][comparedTrackPtBin.size()];
+
+//      for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
+//         for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+//        hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = NULL;
+//         } // Track pT
+//      } // Jet pT
+
   
-  // Choose the bin ranges
-  histograms->SetCentralityBinRange(0,nCentralityBins);
-  
-  // Load the histograms from the file
-  histograms->LoadHistograms(); // Processed or unprocessed?
+  // Read the E3C from the file
+    for(auto centralityBin : comparedCentralityBin){
+     for(auto jetPtBin : comparedJetPtBin){
+        for(auto trackPtBin : comparedTrackPtBin){
 
-  // Initialize E3C to NULL
-  TH2D* hEnergyEnergyEnergyCorrelatorFull;
+	iCentrality = card->FindBinIndexCentrality(centralityBin);
+	iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
+        iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+	  
+	cout << "Centrality: " << iCentrality << endl;
+  	cout << "Jet pT: " << iJetPt << endl;
+  	cout << "Track pT: " << iTrackPt << endl;
+   	
+	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
+       
+        // Debugging  
+	if(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]){
+		cout << "Not null after filling" << endl;
+	}else{
+	cout << "Null after filling" << endl;}
 
-for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
-    for(int iJetPt = 0; iJetPt < nAnalysisJetPtBins; iJetPt++){
-      for(int iTrackPt = 0; iTrackPt < nTrackPtBins; iTrackPt++){
-        hEnergyEnergyEnergyCorrelatorFull[iCentrality][iJetPt][iTrackPt] = NULL;
-      } // Track pT loop
-    }  // Jet pT loop
-  }  // Centrality loop
-
-  // Read the jet response matrices from the file
-for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
-    for(int iJetPt = 0; iJetPt < nAnalysisJetPtBins; iJetPt++){
-      for(int iTrackPt = 0; iTrackPt < nTrackPtBins; iTrackPt++){
-        hEnergyEnergyEnergyCorrelatorFull[iCentrality][iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFullProcessed(8, iCentrality, iJetPt, iTrackPt);
-      } // Track pT loop
-    }  // Jet pT loop
-  }  // Centrality loop
-
-
-  // **********************************
-  //         Draw the figures
-  // **********************************
+       } // Track pT
+     } // Jet pT
+   } // Centrality
 
   // Prepare a JDrawer for drawing purposes
-  JDrawer* drawer = new JDrawer();
-  //drawer->SetLogZ(true);
+  JDrawer *drawer = new JDrawer();
+  drawer->SetLogZ(true);
   drawer->SetLeftMargin(0.13);
   drawer->SetRightMargin(0.11);
   drawer->SetTopMargin(0.08);
   drawer->SetTitleOffsetX(1.17);
   drawer->SetTitleOffsetY(1);
 
-  // Helper variables
-  TLegend* legend;
-  TString centralityString;
-  TString compactCentralityString;
-  TString compactJetPtString;
-
   // Draw the response matrices to canvas
-  for(int iCentrality = 0; iCentrality < nCentralityBins; iCentrality++){
+     for(auto jetPtBin : comparedJetPtBin){
+        for(auto trackPtBin : comparedTrackPtBin){
+	
+	iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
+        iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
+        
+	// Debugging
+	if(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]){
+		cout << "Not null at start of drawing" << endl;
+		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,3000); 
+		drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt], "X", "Y", "120 < Jet pT < 140 [GeV], Track pT = 1.0 GeV", "colz");
+	} else{
+	cout << "Null at the start of drawing" << endl;}
 
-    if(isPbPbData){
-      centralityString = Form("Pythia+Hydjet: %.0f-%.0f", card->GetLowBinBorderCentrality(iCentrality), card->GetHighBinBorderCentrality(iCentrality));
-      compactCentralityString = Form("_C%.0f-%.0f", card->GetLowBinBorderCentrality(iCentrality), card->GetHighBinBorderCentrality(iCentrality));
-    } else {
-      centralityString = "Pythia8";
-      compactCentralityString = "_pythia8";
-    }
-
-    hEnergyEnergyEnergyCorrelatorFull[iCentrality]->GetZaxis()->SetRangeUser(0.01,3000);
-    hEnergyEnergyEnergyCorrelatorFull[iCentrality]->GetXaxis()->SetRangeUser(0,1);
-    hEnergyEnergyEnergyCorrelatorFull[iCentrality]->GetYaxis()->SetRangeUser(0,1);
-    drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iCentrality],"x", "y", "E3C in XY Plane", "colz");
-
-  } // Centrality loop
-
-  drawer->SaveFigure("xyE3C_06122025.pdf");
-
-//        legend = new TLegend(0.42, 0.7, 0.8, 0.88);
-//        legend->SetFillStyle(0); legend->SetBorderSize(0); legend->SetTextSize(0.05); legend->SetTextFont(62);
-//
-//        legend->AddEntry((TObject*)0, centralityString.Data(), "");
-//        legend->AddEntry((TObject*)0, jetPtString.Data(), "");
-//
-//        legend->Draw();
+	} // Track pT
+     } // Jet pT
+  
+  // Save figure
+   gPad->GetCanvas()->SaveAs("figures/xyPlaneTest_06132025.pdf");
 }
