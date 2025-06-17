@@ -1848,6 +1848,7 @@ void EECHistogramManager::LoadEnergyEnergyEnergyCorrelatorFullHistograms(){
   for(int iEnergyEnergyCorrelatorType = knEnergyEnergyCorrelatorTypes - 1; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes; iEnergyEnergyCorrelatorType++){ // Bounds only include eeecFull 
     if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;  // Only load the selected energy-energy correlators
 
+
     // For track pT bins, we are looking at all the tracks above the lower threshold
     histogramArray = (THnSparseD*) fInputFile->Get(fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
     higherTrackPtBin = histogramArray->GetAxis(3)->GetNbins()+1; // Get lowerTrackPT axis? previously got axis(2)
@@ -1861,7 +1862,7 @@ void EECHistogramManager::LoadEnergyEnergyEnergyCorrelatorFullHistograms(){
       weightExponentBin = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
 
       // After we have determined a bin index for the desired weight exponent, add it as a constraint to the energy weight axis
-      axisIndices[0] = 6; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
+      axisIndices[0] = 7; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
 
       // If we are using weight exponent axis as restriction, all other restricton axis indices must be shifted by one
       weightRestricted = 1;
@@ -1906,7 +1907,8 @@ void EECHistogramManager::LoadEnergyEnergyEnergyCorrelatorFullHistograms(){
           highLimits[weightRestricted+2] = higherTrackPtBin;
 
           // Read the energy-energy correlator histograms without jet pT restrictions
-          fhEnergyEnergyEnergyCorrelatorFull[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram2D(histogramArray, 0, 1, 3+weightRestricted, axisIndices, lowLimits, highLimits); // Added y-axis index, everything else the same
+          fhEnergyEnergyEnergyCorrelatorFull[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram2D(histogramArray, 0, 1, 3+weightRestricted, axisIndices, lowLimits, highLimits, false); // Added y-axis index, everything else the same
+
 
 	  // Deleted PbPb MC stuff for now because we do not need that
 
@@ -1926,7 +1928,8 @@ void EECHistogramManager::LoadEnergyEnergyEnergyCorrelatorFullHistograms(){
             highLimits[weightRestricted+3] = higherJetPtBin;
 
             // Read the energy-energy correlator histograms
-            fhEnergyEnergyEnergyCorrelatorFull[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram2D(histogramArray, 0, 1, 4+weightRestricted, axisIndices, lowLimits, highLimits);
+            fhEnergyEnergyEnergyCorrelatorFull[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram2D(histogramArray, 0, 1, 4+weightRestricted, axisIndices, lowLimits, highLimits, false);
+
 
 	 } // Jet pT loop
         } // Track pT loop
@@ -5413,6 +5416,8 @@ TH2D* EECHistogramManager::GetHistogramEnergyEnergyEnergyCorrelatorFull(const in
 
   // If the histogram is NULL, try to load it from the input file
   if(fhEnergyEnergyEnergyCorrelatorFull[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent] == NULL){
+
+    cout << "Trying name: " << fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType] << endl;
     TString histogramNamer = Form("%s/%s/%s%s_C%dT%d", fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType], fPairingTypeSaveName[iPairingType], iCentrality, iTrackPt);
 
     if(iJetPt != fnJetPtBinsEEC) histogramNamer.Append(Form("J%d", iJetPt));

@@ -2462,6 +2462,22 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
             fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 6); // Weighted x6 to account for ABC, ACB, BAC, BCA, CAB, CBA - could also have done this x2, and above x1
             fHistograms->fhEnergyEnergyEnergyCorrelatorFull->Fill(fillerEnergyEnergyEnergyCorrelatorFull, fTotalEventWeight * correlatorWeight * 6); 
 	  }
+	  
+	  // Fill again but with x coordinate reflected over x = 0.5
+
+	  xCoord = 1- ((1 - (projRS * projRS) + (projRM * projRM)) / 2); // x' = 1 - x
+	  fillerEnergyEnergyEnergyCorrelatorFull[0] = xCoord;               // Axis 0: x-coordinate for projected plane
+	  fillerEnergyEnergyEnergyCorrelatorFull[1] = yCoord;		    // Axis 1: y-coordinate for projected plane
+          fillerEnergyEnergyEnergyCorrelatorFull[2] = jetPt;                // Axis 2: pT of the jet the tracks are near of
+          fillerEnergyEnergyEnergyCorrelatorFull[3] = lowerTrackPt;         // Axis 3: Lower of the two track pT:s
+          fillerEnergyEnergyEnergyCorrelatorFull[4] = centrality;           // Axis 4: Event centrality
+          fillerEnergyEnergyEnergyCorrelatorFull[5] = iPairingType;         // Axis 5: Track pairing type (signal-signal, signal-reflected cone, reflected cone-reflected cone)
+          fillerEnergyEnergyEnergyCorrelatorFull[6] = subeventCombination;  // Axis 6: Subevent combination type
+          fillerEnergyEnergyEnergyCorrelatorFull[7] = weightIndex;          // Axis 7: Inxed for the current energy-energy correlator weight
+
+	if(fFillEnergyEnergyEnergyCorrelators){
+            fHistograms->fhEnergyEnergyEnergyCorrelatorFull->Fill(fillerEnergyEnergyEnergyCorrelatorFull, fTotalEventWeight * correlatorWeight * 6); 
+	  }
 	    // Deleted covariance matrix information and systematics stuff and also efficiency stuff
 
           weightIndex++;

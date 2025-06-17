@@ -474,6 +474,18 @@ void EECHistograms::CreateHistograms(){
   for(int iDeltaR = 0; iDeltaR <= nDeltaRBinsEEC; iDeltaR++){
     deltaRBinsEEC[iDeltaR] = (minDeltaREEC+binnerShift)*TMath::Exp(iDeltaR*deltaRlogBinWidth)-binnerShift;
   }
+  
+  // Not logarithmic X,Y binning for energy-energy-energy correlator full histograms
+  const Int_t nDeltaRBinsEEECFull = 32;
+  const Double_t minDeltaREEECFull = 0;
+  const Double_t maxDeltaREEECFull = 1.0; // Helpful for E3C Full 
+  
+  Double_t deltaRBinsEEECFull[nDeltaRBinsEEECFull+1];
+  Double_t deltaRbinWidth = (maxDeltaREEECFull - minDeltaREEECFull) / nDeltaRBinsEEECFull;
+  
+  for(int iDeltaR = 0; iDeltaR <= nDeltaRBinsEEECFull; iDeltaR++){
+      deltaRBinsEEECFull[iDeltaR] = minDeltaREEECFull + iDeltaR * deltaRbinWidth;
+  }
 
   // Binning for the two-dimensional unfolding response
   const Int_t nUnfoldingBins = nDeltaRBinsEEC*nJetPtBinsEEC;
@@ -522,6 +534,11 @@ void EECHistograms::CreateHistograms(){
   Int_t nBinsEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
+  
+  const Int_t nAxesEnergyEnergyEnergyCorrelatorFull = 8;
+  Int_t nBinsEnergyEnergyEnergyCorrelatorFull[nAxesEnergyEnergyEnergyCorrelatorFull];
+  Double_t lowBinBorderEnergyEnergyEnergyCorrelatorFull[nAxesEnergyEnergyEnergyCorrelatorFull];
+  Double_t highBinBorderEnergyEnergyEnergyCorrelatorFull[nAxesEnergyEnergyEnergyCorrelatorFull];
   
   const Int_t nAxesJetClosure = 7;
   Int_t nBinsJetClosure[nAxesJetClosure];
@@ -849,6 +866,46 @@ void EECHistograms::CreateHistograms(){
   highBinBorderEnergyEnergyCorrelator[6] = maxEnergyWeightEEC; // Index of the last defined energy weight
 
   
+  // Axis 0 for the energy-energy-energy correlator histogram: xCoordinate
+  nBinsEnergyEnergyEnergyCorrelatorFull[0] = nDeltaRBinsEEECFull;        // nBins for deltaR between the two tracks
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[0] = minDeltaREEECFull;   // low bin border for deltaR
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[0] = maxDeltaREEECFull;  // high bin border for deltaR
+  
+  // Axis 1 for the energy-energy-energy correlator histogram: yCoordinate
+  nBinsEnergyEnergyEnergyCorrelatorFull[1] = nDeltaRBinsEEECFull;        // nBins for deltaR between the two tracks
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[1] = minDeltaREEECFull;   // low bin border for deltaR
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[1] = maxDeltaREEECFull;  // high bin border for deltaR
+  
+  // Axis 2 for the energy-energy-energy correlator histogram: jet pT
+  nBinsEnergyEnergyEnergyCorrelatorFull[2] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[2] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[2] = maxJetPtEEC;   // high bin border for jet pT
+  
+  // Axis 3 for the energy-energy-energy correlator histogram: track pT
+  nBinsEnergyEnergyEnergyCorrelatorFull[3] = nTrackPtBinsEEC;        // nBins for track pT
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[3] = minTrackPtEEC;   // low bin border for track pT
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[3] = maxTrackPtEEC;  // high bin border for track pT
+  
+  // Axis 4 for the energy-energy correlator histogram: centrality
+  nBinsEnergyEnergyEnergyCorrelatorFull[4] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[4] = minCentrality;  // low bin border for centrality
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[4] = maxCentrality; // high bin border for centrality
+  
+  // Axis 5 for the energy-energy-energy correlator histogram: track pairing type (same jet/reflected cone jet)
+  nBinsEnergyEnergyEnergyCorrelatorFull[5] = nTrackPairingTypeBins;       // nBins for track pairing types
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[5] = minTrackPairingType;  // low bin border for track pairing type
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[5] = maxTrackPairingType; // high bin border for track pairing type
+  
+  // Axis 6 for the energy-energy correlator histogram: track subevent (only relevant for Monte Carlo)
+  nBinsEnergyEnergyEnergyCorrelatorFull[6] = nSubeventCombinationBins;       // nBins for subevent combinations (pythia-pythia, pythia-hydjet, hydjet-hydjet)
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[6] = minSubeventCombination;  // low bin border for subevent combinations
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[6] = maxSubeventCombination; // high bin border for subevent combinations
+
+  // Axis 7 for the energy-energy correlator histogram: energy weight index
+  nBinsEnergyEnergyEnergyCorrelatorFull[7] = nEnergyWeightsEEC;          // Number of energy weights defined in the card
+  lowBinBorderEnergyEnergyEnergyCorrelatorFull[7] = minEnergyWeightEEC;  // Index of the first defined energy weight
+  highBinBorderEnergyEnergyEnergyCorrelatorFull[7] = maxEnergyWeightEEC; // Index of the last defined energy weight
+  
   // Create the histograms for energy-energy correlators with and without track efficiency corrections
   fhEnergyEnergyCorrelator = new THnSparseF("energyEnergyCorrelator", "energyEnergyCorrelator", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelator->Sumw2();
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus = new THnSparseF("energyEnergyCorrelatorEfficiencyVariationPlus", "energyEnergyCorrelatorEfficiencyVariationPlus", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyCorrelatorEfficiencyVariationPlus->Sumw2();
@@ -861,7 +918,8 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL = new THnSparseF("energyEnergyEnergyCorrelatorRL", "energyEnergyEnergyCorrelatorRL", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyEnergyCorrelatorRL->Sumw2();
   fhEnergyEnergyEnergyCorrelatorRM = new THnSparseF("energyEnergyEnergyCorrelatorRM", "energyEnergyEnergyCorrelatorRM", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyEnergyCorrelatorRM->Sumw2();
   fhEnergyEnergyEnergyCorrelatorRS = new THnSparseF("energyEnergyEnergyCorrelatorRS", "energyEnergyEnergyCorrelatorRS", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyEnergyCorrelatorRS->Sumw2();
-  fhEnergyEnergyEnergyCorrelatorFull = new THnSparseF("energyEnergyEnergyCorrelatorFull", "energyEnergyEnergyCorrelatorFull", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyEnergyCorrelatorFull->Sumw2();
+
+  fhEnergyEnergyEnergyCorrelatorFull = new THnSparseF("energyEnergyEnergyCorrelatorFull", "energyEnergyEnergyCorrelatorFull", nAxesEnergyEnergyEnergyCorrelatorFull, nBinsEnergyEnergyEnergyCorrelatorFull, lowBinBorderEnergyEnergyEnergyCorrelatorFull, highBinBorderEnergyEnergyEnergyCorrelatorFull); fhEnergyEnergyEnergyCorrelatorFull->Sumw2();
   
   // Set custom bin borders for histograms
   fhEnergyEnergyCorrelator->SetBinEdges(0,deltaRBinsEEC);                                  // DeltaR bins
@@ -873,7 +931,8 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(0,deltaRBinsEEC);                          // RL bins - may change after seeing distribution
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(0,deltaRBinsEEC);                          // RM bins - may change after seeing distribution
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(0,deltaRBinsEEC);                          // RS bins - may change after seeing distribution
-  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(0,deltaRBinsEEC);                        // Full bins - may change after seeing distribution
+  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(0,deltaRBinsEEECFull);                        // Full bins - may change after seeing distribution
+  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(1,deltaRBinsEEECFull);                        // yCoordinate also needs deltaR distribution
   
   fhEnergyEnergyCorrelator->SetBinEdges(1,jetPtBinsEEC);                                   // Jet pT bins
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus->SetBinEdges(1,jetPtBinsEEC);            // Jet pT bins
@@ -884,7 +943,7 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(1,jetPtBinsEEC);                           // Jet pT bins for EEEC RL
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(1,jetPtBinsEEC);                           // Jet pT bins for EEEC RM
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(1,jetPtBinsEEC);                           // Jet pT bins for EEEC RS
-  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(1,jetPtBinsEEC);                         // Jet pT bins for EEEC Full
+  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(2,jetPtBinsEEC);                         // Jet pT bins for EEEC Full
   
   fhEnergyEnergyCorrelator->SetBinEdges(2,trackPtBinsEEC);                                 // Track pT bins
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus->SetBinEdges(2,trackPtBinsEEC);          // Track pT bins
@@ -895,7 +954,7 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(2,trackPtBinsEEC);                         // Track pT bins for EEEC RL
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(2,trackPtBinsEEC);                         // Track pT bins for EEEC RM
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(2,trackPtBinsEEC);                         // Track pT bins for EEEC RS
-  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(2,trackPtBinsEEC);                       // Track pT bins for EEEC Full
+  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(3,trackPtBinsEEC);                       // Track pT bins for EEEC Full
   
   fhEnergyEnergyCorrelator->SetBinEdges(3,wideCentralityBins);                             // Centrality bins
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus->SetBinEdges(3,wideCentralityBins);      // Centrality bins
@@ -906,7 +965,7 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(3,wideCentralityBins);                     // Centrality bins for EEEC RL
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(3,wideCentralityBins);                     // Centrality bins for EEEC RM
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(3,wideCentralityBins);                     // Centrality bins for EEEC RS
-  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(3,wideCentralityBins);                   // Centrality bins for EEEC Full
+  fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(4,wideCentralityBins);                   // Centrality bins for EEEC Full
   
   // ======== THnSparses for jet pT closures ========
   
