@@ -274,6 +274,29 @@ public:
   }
   
   /*
+   *  Draw a histogram to a rotated canvas
+   *
+   *  TH1 *histo = histogram to be drawn
+   *  char *xTitle = title for the x-axis
+   *  char *yTitle = title for the y-axis
+   *  char *title = title of the histogram
+   *  char *drawOption = options for drawing given in root documentation
+   *  int theta = turn canvas theta degrees
+   *  int phi = turn canvas phi degrees 
+   */
+  void DrawHistogram(TH1 *histo, const char *xTitle, const char *yTitle, int theta, int phi, const char *title = "", const char *drawOption = ""){
+    // If no titles are given, keep the original ones
+    if(strcmp(xTitle, "") == 0) xTitle = histo->GetXaxis()->GetTitle(); // To compare char*:s we need to use strcmp function provided by <cstring> library
+    if(strcmp(yTitle, "") == 0) yTitle = histo->GetYaxis()->GetTitle();
+    if(strcmp(title, "") == 0) title = histo->GetTitle();
+    
+    // Set up the histogram and draw it to canvas
+    CreateCanvas(theta, phi);
+    histo->SetTitle(title);
+    SetHistogramStyle(histo, xTitle, yTitle);
+    histo->Draw(drawOption);
+  }
+  /*
    * Draw histogram without changing the titles
    *
    *  TH1 *histo = histogram to be drawn
@@ -533,6 +556,27 @@ public:
     fSinglePad->SetBottomMargin(fMarginBottom);
     fSinglePad->SetTopMargin(fMarginTop);
     fSinglePad->SetRightMargin(fMarginRight);
+    SetPadValues(fSinglePad);
+    fSinglePad->Draw();
+    fSinglePad->cd();
+  }
+  
+  /*
+   * Create a canvas that can be rotated 
+   */
+  void CreateCanvas(int theta, int phi){
+    
+    // Create a canvas and set up its appearance
+    gStyle->SetOptStat(0);   // remove statistics box
+    TString cname = GenerateNameForCanvas();
+    fCanvas = new TCanvas(cname.Data(),cname.Data(),fTopLeftX,fTopLeftY,fCanvasWidth,fCanvasHeight);
+    fSinglePad = new TPad("pad","pad",0.01,0.01,0.99,0.99,0,0,0);
+    fSinglePad->SetLeftMargin(fMarginLeft);
+    fSinglePad->SetBottomMargin(fMarginBottom);
+    fSinglePad->SetTopMargin(fMarginTop);
+    fSinglePad->SetRightMargin(fMarginRight);
+    fSinglePad->SetTheta(theta);
+    fSinglePad->SetPhi(phi);
     SetPadValues(fSinglePad);
     fSinglePad->Draw();
     fSinglePad->cd();

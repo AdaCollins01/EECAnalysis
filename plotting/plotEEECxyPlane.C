@@ -9,9 +9,13 @@
  */
 void plotEEECxyPlane(){
 
+  // Characteristics that are often changed
+  bool is2d = true; // If true, 2d plot is made. If false, 3d plot is made
+  bool normalizeDistributions = true; // If true, distributions are normalized. If false, raw counts are used
+  TString dateFileString = "06222025";
+
   // File from which the E3C are read
   TString inputFileName = "projected_noLog_xyPlaneFull_06172025.root";
-  //TString inputFileName = "projected_normalTest.root";
   
   // Open the input file
   TFile* inputFile = TFile::Open(inputFileName);
@@ -35,15 +39,12 @@ void plotEEECxyPlane(){
   const int nJetPtBinsEEC = card->GetNJetPtBinsEEC();
   const int nTrackPtBinsEEC = card->GetNTrackPtBinsEEC();
 
-  cout << "Jet pT Bins: " << nJetPtBinsEEC << endl;
-  cout << "Track pT Bins: " << nTrackPtBinsEEC << endl;
-
   // Bin vectors - start with one 
   std::vector<std::pair<double,double>> comparedCentralityBin; // Maybe don't want centrality? Because it's pp?
   comparedCentralityBin.push_back(std::make_pair(-1,100));
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
-  comparedJetPtBin.push_back(std::make_pair(120,140));
+  comparedJetPtBin.push_back(std::make_pair(160,180));
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
@@ -56,7 +57,7 @@ void plotEEECxyPlane(){
   int iEnergyEnergyCorrelatorType = EECHistogramManager::kEnergyEnergyEnergyCorrelatorFull;
   int iPairingType = EECHistograms::kSameJetPair;
   int iSubevent = EECHistograms::knSubeventCombinations;
- 
+  
   // Initialize the jet response matrices to NULL
   TH2D* hEnergyEnergyEnergyCorrelatorFull[nJetPtBinsEEC][nTrackPtBinsEEC];
 
@@ -74,47 +75,73 @@ void plotEEECxyPlane(){
 	//iCentrality = card->FindBinIndexCentrality(centralityBin);
 	iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
         iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
-	  
+	
+	if(normalizeDistributions){
+            std::pair<double, double> drawingRange = std::make_pair(0.008, 0.39);
+	    double epsilon = 0.0001;
+
 	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
-       
-        // Debugging  
-	if(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]){
-		cout << "Not null after filling" << endl;
-		cout << "# Entries: " << hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetEntries() << endl;
-		cout << "Bin Content: " << hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetBinContent(0,0) << endl;
-	}else{
-	cout << "Null after filling" << endl;}
+	
+	int lowNormalizationBin = hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetXaxis()->FindBin(drawingRange.first + epsilon);
+           int highNormalizationBin = hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetXaxis()->FindBin(drawingRange.second - epsilon);
+
+            hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->Scale(1 / hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, lowNormalizationBin, highNormalizationBin, "width"));
+          } else {
+	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
+          } 
 
        } // Track pT
      } // Jet pT
 
   // Prepare a JDrawer for drawing purposes
   JDrawer *drawer = new JDrawer();
-  drawer->SetLogZ(true);
+  //drawer->SetLogZ(true);
   drawer->SetLeftMargin(0.13);
-  drawer->SetRightMargin(0.11);
+  drawer->SetRightMargin(0.16);
   drawer->SetTopMargin(0.08);
-  drawer->SetTitleOffsetX(1.17);
-  drawer->SetTitleOffsetY(1);
+  drawer->SetTitleOffsetX(1.2);
+  drawer->SetTitleOffsetY(1.2);
+  drawer->SetLabelSizeX(0.04);
+  drawer->SetLabelSizeY(0.04);
+  drawer->SetLabelSizeZ(0.03);
+  drawer->SetTitleSizeX(0.05);
+  drawer->SetTitleSizeY(0.05);
 
-  // Draw the response matrices to canvas
+  TString jetPtFileString = Form("J=%.0f-%.0f", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second);
+  TString trackPtFileString = Form("T=%.0f", comparedTrackPtBin.at(0));
+  TString normalizeFileString = "";
+  if(normalizeDistributions) {normalizeFileString = "Normalized_";}
+
+  TString ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} = %.0f GeV", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second, comparedTrackPtBin.at(0));
+  if(normalizeDistributions) {ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} = %.0f GeV, Normalized", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second, comparedTrackPtBin.at(0));}
+
+  // Draw the histogram to canvas
      for(auto jetPtBin : comparedJetPtBin){
         for(auto trackPtBin : comparedTrackPtBin){
-	
 	iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
         iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
         
-	// Debugging
-	if(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]){
-		cout << "Not null at start of drawing" << endl;
-		//hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,3000); 
-		drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt], "X", "Y", "120 < Jet pT < 140 GeV, Track pT = 1.0 GeV", "colz");
-	} else{
-	cout << "Null at the start of drawing" << endl;}
+	if(normalizeDistributions){
+		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,24);
+	} else {
+		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,3000);
+	}
+
+        if(is2d){
+		drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt], "X", "Y", 0, 0, ptTitleString, "colz");
+	} else {
+	drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt], "X", "Y", 45, 135, ptTitleString, "lego2z");}
+
+gPad->Modified();
+gPad->Update();
 
 	} // Track pT
      } // Jet pT
   
   // Save figure
-  gPad->GetCanvas()->SaveAs("figures/noLog_xyPlaneFull_06172025.pdf");
+  if(is2d){
+	    gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/2d_%s%s_%s_%s.pdf", normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), dateFileString.Data()));
+  } else {
+  	gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/3d_%s%s_%s_%s.pdf", normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), dateFileString.Data()));
+  }
 }
