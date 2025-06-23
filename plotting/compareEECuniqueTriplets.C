@@ -15,7 +15,7 @@ void compareEECuniqueTriplets(){
   
   // Files for comparison
   std::vector<TString> fileName;
-  fileName.push_back("projected_uniqueTripletsContribution_06172025.root");
+  fileName.push_back("test_06202025.root");
   //fileName.push_back("data/pPb/ppData_pfJets_eschemeAxis_nominalEnergyWeight_perpendicularConeBackground_jetEtaCMcut_jet15Trigger_processed_2025-05-14.root");
   //fileName.push_back("data/pPb/pPbData_8TeV_pToMinusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
   //fileName.push_back("data/pPb/pPbData_8TeV_pToPlusEta_pfJets_eschemeAxis_nominalEnergyWeight_minimumBias_perpendicularConeBackground_jetEtaCMcut_processed_2025-05-14.root");
@@ -114,7 +114,7 @@ void compareEECuniqueTriplets(){
   bool individualTrackPt = true; // True = make different figure for each bin. False = plot all track pT bin to the same figure.
 
   // Option to disable normalization of distributions
-  const bool normalizeDistributions = false;
+  const bool normalizeDistributions = true;
 
   // Choose the type of draw energy-energy correlator
   // EECHistogramManager::kEnergyEnergyCorrelatorNormalized = Normalized energy-energy correlator
@@ -159,7 +159,7 @@ void compareEECuniqueTriplets(){
   
   // Figure saving
   const bool saveFigures = true;  // Save figures
-  const char* saveComment = "_uniqueTripletsContribution_06172025";   // Comment given for this specific file
+  const char* saveComment = "_test_06202025";   // Comment given for this specific file
   const char* figureFormat = "pdf"; // Format given for the figures
 
   // Drawing configuration
@@ -429,7 +429,8 @@ void compareEECuniqueTriplets(){
           if(drawnEnergyEnergyCorrelator == EECHistogramManager::knEnergyEnergyCorrelatorProcessingLevels){
             hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyEnergyCorrelatorRS, iCentrality, iJetPt, iTrackPt, iPairingType); // All the combos from RS (again, with the RL axis)
             hEnergyEnergyCorrelatorUnique[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelator(EECHistogramManager::kEnergyEnergyEnergyCorrelatorRL, iCentrality, iJetPt, iTrackPt, iPairingType); // Just the unique combos from RL
-          } else {
+
+    	   } else {
             hEnergyEnergyCorrelator[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyEnergyCorrelatorRS, iCentrality, iJetPt, iTrackPt, drawnEnergyEnergyCorrelator);
             hEnergyEnergyCorrelatorUnique[iFile][iCentralityReference][iJetPtReference][iTrackPtReference] = histograms[iFile]->GetHistogramEnergyEnergyCorrelatorProcessed(EECHistogramManager::kEnergyEnergyEnergyCorrelatorRL, iCentrality, iJetPt, iTrackPt, drawnEnergyEnergyCorrelator);
           }
@@ -682,8 +683,10 @@ void compareEECuniqueTriplets(){
       yAxisName = Form("EEC %s", histograms[0]->GetEnergyEnergyCorrelatorProcessSaveName(drawnEnergyEnergyCorrelator));
     }
     drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelator[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], xAxisName, yAxisName, " ");
-    drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelatorUnique[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], xAxisName, yAxisName, " ");
+    //drawer->DrawHistogramToUpperPad(hEnergyEnergyCorrelatorUnique[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin], xAxisName, yAxisName, "same");
+    hEnergyEnergyCorrelatorUnique[0][firstCentralityBin][firstJetPtBin][firstTrackPtBin]->Draw("same");
 
+    
     for(int iCentrality : currentCentralityIndices){
       for(int iJetPt : currentJetPtIndices){
         for(int iTrackPt : currentTrackPtIndices){
@@ -715,8 +718,8 @@ void compareEECuniqueTriplets(){
             if(colorWithCentrality) individualLegend = Form(" Cent: %.0f-%.0f%%", std::get<kCentrality>(plottedBin).at(legendCentralityIndex).first, std::get<kCentrality>(plottedBin).at(legendCentralityIndex).second);
             legendCentralityIndex++;
             
-	    TString fullLegend = individualLegend + "(All Combinations)";
-	    TString uniqueLegend = individualLegend + "(Only Unique Triplets)";
+	    TString fullLegend = individualLegend + "All Combinations";
+	    TString uniqueLegend = individualLegend + "Only Unique Triplets";
 
 	    legend->AddEntry(hEnergyEnergyCorrelator[iFile][iCentrality][iJetPt][iTrackPt], fullLegend.Data(), "p");
 	   legend->AddEntry(hEnergyEnergyCorrelatorUnique[iFile][iCentrality][iJetPt][iTrackPt], uniqueLegend.Data(), "p");

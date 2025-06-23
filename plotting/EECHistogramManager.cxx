@@ -1051,7 +1051,7 @@ void EECHistogramManager::LoadHistograms(){
   LoadEnergyEnergyCorrelatorHistograms();
   
   // Load full energy-energy-energy correlator 2D-histogram
-  LoadEnergyEnergyEnergyCorrelatorFullHistograms();
+  //LoadEnergyEnergyEnergyCorrelatorFullHistograms();
 
   // Stabilize the background energy-energy correlator histograms
   StabilizeBackground();
@@ -1673,7 +1673,11 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
     
     // For track pT bins, we are looking at all the tracks above the lower threshold
     histogramArray = (THnSparseD*) fInputFile->Get(fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
-    higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
+   
+    cout << fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType] << endl;
+    cout << "# Entries before projection: " << histogramArray->GetEntries() << endl;
+  
+   higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
 
     // Check the number of dimensions in the histogram array. It will be 6 in older files and 7 in newer files
     // We need this information in newer files to project the desired energy weight from the THnSparse
@@ -1717,7 +1721,7 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
           
           // Reset the ranges for all the axes in the histogram array
           for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
-            histogramArray->GetAxis(iAxis)->SetRange(0,0);
+           histogramArray->GetAxis(iAxis)->SetRange(0,0);
           }
 
           // Select the track pT bin indices. Notice that we do not change the higher bin index
@@ -1730,6 +1734,8 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
           
           // Read the energy-energy correlator histograms without jet pT restrictions
           fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 3+weightRestricted, axisIndices, lowLimits, highLimits);
+          
+	 cout << "# Entries no jet pt restriction: " << fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->GetEntries() << endl;
           
           // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
           if(fSystemAndEnergy.Contains("PbPb MC")){
@@ -1773,6 +1779,8 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
             // Read the energy-energy correlator histograms
             fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
             
+            //cout << "# entries with pt restrctions: " << fhEnergyEnergyCorrelator[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations]->GetEntries() << endl;
+
             // For PbPb MC, loop over subevent types
             if(fSystemAndEnergy.Contains("PbPb MC")){
               for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
@@ -2774,7 +2782,7 @@ TH1D* EECHistogramManager::FindHistogram(THnSparseD* histogramArray, int xAxis, 
   // Project out the histogram and give it the created unique name
   TH1D* projectedHistogram = NULL;
   
-  // Check that we are not trying to project a non-existing axis
+ // Check that we are not trying to project a non-existing axis
   if(xAxis < histogramArray->GetNdimensions()){
     projectedHistogram = (TH1D*) histogramArray->Projection(xAxis);
     projectedHistogram->SetName(newName.Data());
@@ -2782,7 +2790,8 @@ TH1D* EECHistogramManager::FindHistogram(THnSparseD* histogramArray, int xAxis, 
     // Apply bin width normalization to the projected histogram
     if(normalizeToBinWidth) projectedHistogram->Scale(1.0,"width");
   }
-  
+ 
+
   // Return the projected histogram
   return projectedHistogram;
 }
@@ -4751,7 +4760,7 @@ void EECHistogramManager::SetLoadEnergyEnergyEnergyCorrelators(const bool loadOr
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRL] = loadOrNot;
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRM] = loadOrNot;
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRS] = loadOrNot;
-  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorFull] = loadOrNot;
+//fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorFull] = loadOrNot;
 }
 
 // Setter for loading all energy-energy correlators

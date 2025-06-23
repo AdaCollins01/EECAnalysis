@@ -2346,40 +2346,43 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
 	// Find the subevent type based on the subevents of the tracks (only relevant for simulation)
         subeventCombination = GetSubeventCombination(subeventTrack1, subeventTrack2);
 
-	// Commented out because we only want unique triplets right now - add in a boolean if we continue pursuing
+	// EEECFull will be inaccurate - really need to add in a boolean to clean all of this up bc commenting 
+	// and uncommenting all the time is unwise!
 	
-//        // Find the deltaR between the tracks
-//        RL = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
-//	RM = RL;
-//	RS = 0.0; // Degenerate triangle RS is collapsed, leaving RM = RL
-//
-//	// Get lower pT
-//	lowerTrackPt = trackPt1;
-//        if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
-//
-//	  // Start with the pTa^2 * pTb case
-//          correlatorWeight = trackPt1*trackPt1*trackPt2; 
-//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-//
-//	if(fFillEnergyEnergyEnergyCorrelators){
-//            fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
-//            fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
-//            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for AAB, ABA, BAA   
-//	  }
-//
-//	  // Repeat for the pTb^2 * pTa case
-//          correlatorWeight = trackPt1*trackPt2*trackPt2; 
-//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-//	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-//
-//	if(fFillEnergyEnergyEnergyCorrelators){
-//            fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
-//            fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
-//            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for BBA, BAB, ABB   
-//	  }
+        // Find the deltaR between the tracks
+        RL = GetDeltaR(trackEta1, trackPhi1, trackEta2, trackPhi2);
+	RM = RL;
+	RS = 0.0; // Degenerate triangle RS is collapsed, leaving RM = RL
+
+	// Get lower pT
+	lowerTrackPt = trackPt1;
+        if(trackPt2 < trackPt1) lowerTrackPt = trackPt2;
+
+	  // Start with the pTa^2 * pTb case
+	  // Only fill RS with the degenerate cases - filling it with RL
+          correlatorWeight = trackPt1*trackPt1*trackPt2; 
+	 cout << correlatorWeight << endl;
+	  //helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+	  //helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+
+	if(fFillEnergyEnergyEnergyCorrelators){
+           // fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
+           //fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
+            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for AAB, ABA, BAA   
+	  }
+
+	 // Repeat for the pTb^2 * pTa case
+          correlatorWeight = trackPt1*trackPt2*trackPt2; 
+	  //helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+	  //helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+
+	if(fFillEnergyEnergyEnergyCorrelators){
+            //fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 3);  
+            //fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 3);  
+            fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 3); // Weighted x3 to account for BBA, BAB, ABB   
+	  }
 	
 	// Loop over the third track so we can include ABC case
 	for(Int_t iThirdTrack = iSecondTrack + 1; iThirdTrack < nTracks3; iThirdTrack++){ // Index for doublecounting
@@ -2395,7 +2398,6 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
         	// Find the track subevent (only relevant for simulation)
         	subeventTrack3 = selectedTrackSubevent[thirdParticleType[iPairingType]].at(iThirdTrack);
 
-        
         // Find the subevent type based on the subevents of the tracks (only relevant for simulation)  
         subeventCombination = GetSubeventCombination(subeventTrack1, subeventTrack2);
         
@@ -2411,6 +2413,7 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
 	RM = dRs[1];
 	RL = dRs[2];
 
+	// Can keep this even though EEECFull is meaningless rn 
 	// Calculate (x, y) for projection
 	projRL = 1; // 1 = RL / RL
 	projRM = RM / RL;
@@ -2442,9 +2445,11 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
 	  // Deleted smearing stuff and pair efficiency correction
 
           // Fill the energy-energy-energy correlator histograms
+	  // Filling RS so it has all permutations and RL so it has just the unique triplets
+	  // Both are filled with RL axis - CHANGE LATER
 	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRL, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
-	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RS, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+	  //helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRM, RM, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
+	  helpFillEEECArray(fillerEnergyEnergyEnergyCorrelatorRS, RL, jetPt, lowerTrackPt, centrality, iPairingType, subeventCombination, weightIndex);
 
 	  // Fill the full energy-energy-energy correlators - separately because it has an extra axis
 	  fillerEnergyEnergyEnergyCorrelatorFull[0] = xCoord;               // Axis 0: x-coordinate for projected plane
@@ -2458,10 +2463,10 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
 
 	if(fFillEnergyEnergyEnergyCorrelators){
             fHistograms->fhEnergyEnergyEnergyCorrelatorRL->Fill(fillerEnergyEnergyEnergyCorrelatorRL, fTotalEventWeight * correlatorWeight * 6); 
-            fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 6);  
+            //fHistograms->fhEnergyEnergyEnergyCorrelatorRM->Fill(fillerEnergyEnergyEnergyCorrelatorRM, fTotalEventWeight * correlatorWeight * 6);  
             fHistograms->fhEnergyEnergyEnergyCorrelatorRS->Fill(fillerEnergyEnergyEnergyCorrelatorRS, fTotalEventWeight * correlatorWeight * 6); // Weighted x6 to account for ABC, ACB, BAC, BCA, CAB, CBA - could also have done this x2, and above x1
-            fHistograms->fhEnergyEnergyEnergyCorrelatorFull->Fill(fillerEnergyEnergyEnergyCorrelatorFull, fTotalEventWeight * correlatorWeight * 6); 
-	  }
+            //fHistograms->fhEnergyEnergyEnergyCorrelatorFull->Fill(fillerEnergyEnergyEnergyCorrelatorFull, fTotalEventWeight * correlatorWeight * 6); 
+	 }
 	  
 	  // Fill again but with x coordinate reflected over x = 0.5
 
@@ -2476,7 +2481,7 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
           fillerEnergyEnergyEnergyCorrelatorFull[7] = weightIndex;          // Axis 7: Inxed for the current energy-energy correlator weight
 
 	if(fFillEnergyEnergyEnergyCorrelators){
-            fHistograms->fhEnergyEnergyEnergyCorrelatorFull->Fill(fillerEnergyEnergyEnergyCorrelatorFull, fTotalEventWeight * correlatorWeight * 6); 
+            //fHistograms->fhEnergyEnergyEnergyCorrelatorFull->Fill(fillerEnergyEnergyEnergyCorrelatorFull, fTotalEventWeight * correlatorWeight * 6); 
 	  }
 	    // Deleted covariance matrix information and systematics stuff and also efficiency stuff
 
@@ -2487,6 +2492,10 @@ void EECAnalyzer::CalculateEnergyEnergyEnergyCorrelator(const vector<double> sel
    } // Outer track loop
  } // Loop over pairing types (same jet/reflected cone jet)
   
+//Debugging 
+//cout << "RS (All combos) entries: " << fHistograms->fhEnergyEnergyEnergyCorrelatorRS->GetEntries() << endl;
+//cout << "RL (Unique triplets) entries: " << fHistograms->fhEnergyEnergyEnergyCorrelatorRL->GetEntries() << endl;
+
 }
 
 
