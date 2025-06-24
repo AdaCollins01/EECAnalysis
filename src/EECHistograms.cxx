@@ -499,8 +499,8 @@ void EECHistograms::CreateHistograms(){
 
   // Two-option binning for EEECunique and all
   const Int_t nUniqueFlagBins = 2; 
-  const Double_t minUniqueFlag = 0;
-  const Double_t maxUniqueFlag = 1.0; // 1 = Unique triplet (ABC), 0 = degenerate (AAB)
+  const Double_t minUniqueFlag = -0.5;
+  const Double_t maxUniqueFlag = 1.5; // 1 = Unique triplet (ABC), 0 = degenerate (AAB)
 
   Double_t uniqueFlagBins[nUniqueFlagBins+1];
   Double_t uniqueFlagBinWidth = (maxUniqueFlag - minUniqueFlag) / nUniqueFlagBins;
