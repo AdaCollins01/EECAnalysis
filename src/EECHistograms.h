@@ -73,6 +73,8 @@ public:
   THnSparseF* fhEnergyEnergyEnergyCorrelatorRL;    // Histogram for RL energy-energy-energy correlator. Axes: [RL][jetPt][trackPt][centrality]
   THnSparseF* fhEnergyEnergyEnergyCorrelatorRM;    // Histogram for RM energy-energy-energy correlator. Axes: [RM][jetPt][trackPt][centrality]
   THnSparseF* fhEnergyEnergyEnergyCorrelatorRS;    // Histogram for RS energy-energy-energy correlator. Axes: [RS][jetPt][trackPt][centrality]
+  THnSparseF* fhEnergyEnergyEnergyCorrelatorUnique;    // Histogram for RL  energy-energy-energy correlator, only unique triplets. Axes: [RL][jetPt][trackPt][centrality][unique flag]
+  THnSparseF* fhEnergyEnergyEnergyCorrelatorAll;    // Histogram for RL  energy-energy-energy correlator, All possible combinations. Axes: [RL][jetPt][trackPt][centrality][unique flag]
   THnSparseF* fhEnergyEnergyEnergyCorrelatorFull;    // Histogram for full energy-energy-energy correlator. Axes:[x][y][jetPt][trackPt][centrality]
   THnSparseF* fhEnergyEnergyCorrelatorEfficiencyVariationPlus;  // Histogram for energy-energy correlator with track efficiency correction increased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]
   THnSparseF* fhEnergyEnergyCorrelatorEfficiencyVariationMinus; // Histogram for energy-energy correlator with track efficiency correction decreased by systematic variation amount. Axes: [dR][jetPt][trackPt][centrality]

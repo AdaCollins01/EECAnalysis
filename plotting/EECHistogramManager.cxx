@@ -302,7 +302,8 @@ void EECHistogramManager::InitializeFromCard(){
   fnTrackPtBins = fCard->GetNTrackPtBins();
   fnJetPtBinsEEC = fCard->GetNJetPtBinsEEC();
   fnTrackPtBinsEEC = fCard->GetNTrackPtBinsEEC();
-  
+  fnUniqueFlagBins = 2;
+
   // Centrality binning
   for(int iCentrality = 0; iCentrality <= fnCentralityBins; iCentrality++){
     fCentralityBinBorders[iCentrality] = fCard->GetLowBinBorderCentrality(iCentrality);
@@ -1049,6 +1050,9 @@ void EECHistogramManager::LoadHistograms(){
   
   // Load energy-energy correlator histograms
   LoadEnergyEnergyCorrelatorHistograms();
+  
+  // Load energy-energy-energy correlator unique and all histograms
+  LoadEnergyEnergyEnergyCorrelatorUniqueHistograms();
   
   // Load full energy-energy-energy correlator 2D-histogram
   //LoadEnergyEnergyEnergyCorrelatorFullHistograms();
@@ -1816,6 +1820,194 @@ void EECHistogramManager::LoadEnergyEnergyCorrelatorHistograms(){
 }
 
 /*
+ * Loader for energy-energy-energy correlator unique and all histograms
+ *
+ * THnSparse for energy-energy-energy correlators:
+ *
+ *   Histogram name: energyEnergyCorrelator/energyEnergyCorrelatorEfficiencyVariationPlus/energyEnergyCorrelatorEfficiencyVariationMinus/energyEnergyCorrelatorRL/energyEnergyCorrelatorRM/energyEnergyCorrelatorRS
+ *                   energyEnergyCorrelatorPairEfficiencyVariationPlus/energyEnergyCorrelatorPairEfficiencyVariationMinus
+ *
+ *     Axis index       Content of axis                   Note
+ * ----------------------------------------------------------------------
+ *       Axis 0              DeltaR
+ *       Axis 1              Jet pT
+ *       Axis 2           Track pT cut
+ *       Axis 3            Centrality
+ *       Axis 4           Pairing type           Same jet/reflected cone
+ *       Axis 5       Subevent combination        Only relevant for MC
+ *       Axis 6        Energy weight index      Only present in new files
+ *       Axis 7          Unique Flag       1 = unique triplet, 0 = degenerate
+ */
+void EECHistogramManager::LoadEnergyEnergyEnergyCorrelatorUniqueHistograms(){
+  
+  // Define arrays to help find the histograms
+  int axisIndices[7] = {0};
+  int lowLimits[7] = {0};
+  int highLimits[7] = {0};
+  
+  // Define helper variables
+  int duplicateRemover = -1;
+  int lowerCentralityBin = 0;
+  int higherCentralityBin = 0;
+  int lowerJetPtBin = 0;
+  int higherJetPtBin = 0;
+  int lowerTrackPtBin = 0;
+  int higherTrackPtBin = 0;
+  int weightExponentBin = 0;
+  int weightRestricted = 0;
+  THnSparseD* histogramArray;
+  
+  // Loop over all different energy-energy correlator histograms
+  for(int iEnergyEnergyCorrelatorType = knEnergyEnergyCorrelatorTypes - 3; iEnergyEnergyCorrelatorType < knEnergyEnergyCorrelatorTypes - 1; iEnergyEnergyCorrelatorType++){  // Only want Unique and All
+    if(!fLoadEnergyEnergyCorrelatorHistograms[iEnergyEnergyCorrelatorType]) continue;  // Only load the selected energy-energy correlators
+    
+    // For track pT bins, we are looking at all the tracks above the lower threshold
+    histogramArray = (THnSparseD*) fInputFile->Get(fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
+   
+    cout << fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType] << endl;
+  
+   higherTrackPtBin = histogramArray->GetAxis(2)->GetNbins()+1;
+
+    // Check the number of dimensions in the histogram array. It will be 6 in older files and 7 in newer files
+    // We need this information in newer files to project the desired energy weight from the THnSparse
+    // We also only need to restrict the axis if there are more than one bin.
+    if(histogramArray->GetNdimensions() >= 8 && fCard->GetNWeightExponents() > 1){
+
+      // First, we need to find the index in histogram axis that the defined jet exponent corresponds to
+      weightExponentBin = fCard->FindWeightExponentIndex(fLoadedWeightExponent);
+
+      // After we have determined a bin index for the desired weight exponent, add it as a constraint to the energy weight axis
+      axisIndices[0] = 6; lowLimits[0] = weightExponentBin; highLimits[0] = weightExponentBin;
+
+      // If we are using weight exponent axis as restriction, all other restricton axis indices must be shifted by one
+      weightRestricted = 1;
+    } else {
+      weightRestricted = 0;
+    }
+    
+    // Loop over all pairing types that are included in the input file
+    for(int iPairingType : *fIncludedPairingTypes){
+      
+      // Setup axes with restrictions, (4 = pairing type)
+      axisIndices[weightRestricted] = 4; 
+      lowLimits[weightRestricted] = iPairingType+1; 
+      highLimits[weightRestricted] = iPairingType+1;
+      
+      // Loop over centrality bins
+      for(int iCentrality = fFirstLoadedCentralityBin; iCentrality <= fLastLoadedCentralityBin; iCentrality++){
+        
+        // Select the centrality bin indices
+        lowerCentralityBin = fCentralityBinIndices[iCentrality];
+        higherCentralityBin = fCentralityBinIndices[iCentrality+1]+duplicateRemover;
+        
+        // Setup axes with restrictions, (3 = centrality)
+        axisIndices[weightRestricted+1] = 3; 
+        lowLimits[weightRestricted+1] = lowerCentralityBin; 
+        highLimits[weightRestricted+1] = higherCentralityBin;
+        
+        // Loop over track pT bins
+        for(int iTrackPt = fFirstLoadedTrackPtBinEEC; iTrackPt <= fLastLoadedTrackPtBinEEC; iTrackPt++){
+          
+          // Reset the ranges for all the axes in the histogram array
+          for(int iAxis = 0; iAxis < histogramArray->GetNdimensions(); iAxis++){
+           histogramArray->GetAxis(iAxis)->SetRange(0,0);
+          }
+
+          // Select the track pT bin indices. Notice that we do not change the higher bin index
+          lowerTrackPtBin = fTrackPtIndicesEEC[iTrackPt];
+          
+          // Add restriction for track pT axis (2 = track pT)
+          axisIndices[weightRestricted+2] = 2; 
+          lowLimits[weightRestricted+2] = lowerTrackPtBin; 
+          highLimits[weightRestricted+2] = higherTrackPtBin;
+       
+       for(int iUniqueFlag = 0; iUniqueFlag < fnUniqueFlagBins; iUniqueFlag++){
+
+
+          axisIndices[weightRestricted+3] = 7; 
+          lowLimits[weightRestricted+3] = 0; 
+          highLimits[weightRestricted+3] = 1;
+       
+       // Read the energy-energy correlator histograms without jet pT restrictions
+          fhEnergyEnergyEnergyCorrelatorUnique[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations][iUniqueFlag] = FindHistogram(histogramArray, 0, 3+weightRestricted, axisIndices, lowLimits, highLimits); 
+          
+          // For PbPb MC, read the energy-energy correlator histograms without jet pT restrictions in subevent bins
+          if(fSystemAndEnergy.Contains("PbPb MC")){
+            for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
+              
+              // Add a restriction for the subevent axis (5 = subevent)
+              
+              // If we are not doing signal-reflected cone pairing, there is no meaningful differentiation between Pythia+Hydjet and Hydjet+Pythia
+              if(iPairingType != EECHistograms::kSignalReflectedConePair && (iSubevent == EECHistograms::kPythiaHydjet || iSubevent == EECHistograms::kHydjetPythia)){
+                axisIndices[weightRestricted+3] = 5; 
+                lowLimits[weightRestricted+3] = EECHistograms::kPythiaHydjet+1; 
+                highLimits[weightRestricted+3] = EECHistograms::kHydjetPythia+1;
+              } else {
+                axisIndices[weightRestricted+3] = 5; 
+                lowLimits[weightRestricted+3] = iSubevent+1; 
+                highLimits[weightRestricted+3] = iSubevent+1;
+              }
+              
+              // Read the energy-energy correlator histograms
+              fhEnergyEnergyEnergyCorrelatorUnique[iEnergyEnergyCorrelatorType][iCentrality][fnJetPtBinsEEC][iTrackPt][iPairingType][iSubevent][iUniqueFlag] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
+              
+            } // Subevent loop
+
+            // Reset the range of the subevent axis before proceeding
+            histogramArray->GetAxis(5)->SetRange(0,0);
+
+          } // PbPb MC requirement
+          
+          // Loop over jet pT bins
+          for(int iJetPt = fFirstLoadedJetPtBinEEC; iJetPt <= fLastLoadedJetPtBinEEC; iJetPt++){
+            
+            // Select the jet pT bin indices
+            lowerJetPtBin = fJetPtIndicesEEC[iJetPt];
+            higherJetPtBin = fJetPtIndicesEEC[iJetPt+1]+duplicateRemover;
+            
+            // Add restriction for jet pT axis (1 = jet pT)
+            axisIndices[weightRestricted+4] = 1; 
+            lowLimits[weightRestricted+4] = lowerJetPtBin; 
+            highLimits[weightRestricted+4] = higherJetPtBin;
+            
+            // Read the energy-energy correlator histograms
+            fhEnergyEnergyEnergyCorrelatorUnique[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][EECHistograms::knSubeventCombinations][iUniqueFlag] = FindHistogram(histogramArray, 0, 4+weightRestricted, axisIndices, lowLimits, highLimits);
+            
+            // For PbPb MC, loop over subevent types
+            if(fSystemAndEnergy.Contains("PbPb MC")){
+              for(int iSubevent = 0; iSubevent < EECHistograms::knSubeventCombinations; iSubevent++){
+                
+                // Add a restriction for the subevent axis (5 = subevent)
+                
+                // If we are not doing signal-reflected cone pairing, there is no meaningful differentiation between Pythia+Hydjet and Hydjet+Pythia
+                if(iPairingType != EECHistograms::kSignalReflectedConePair && (iSubevent == EECHistograms::kPythiaHydjet || iSubevent == EECHistograms::kHydjetPythia)){
+                  axisIndices[weightRestricted+4] = 5; 
+                  lowLimits[weightRestricted+4] = EECHistograms::kPythiaHydjet+1; 
+                  highLimits[weightRestricted+4] = EECHistograms::kHydjetPythia+1;
+                } else {
+                  axisIndices[weightRestricted+4] = 5; 
+                  lowLimits[weightRestricted+4] = iSubevent+1; 
+                  highLimits[weightRestricted+4] = iSubevent+1;
+                }
+                
+                // Read the energy-energy correlator histograms
+                fhEnergyEnergyEnergyCorrelatorUnique[iEnergyEnergyCorrelatorType][iCentrality][iJetPt][iTrackPt][iPairingType][iSubevent][iUniqueFlag] = FindHistogram(histogramArray, 0, 5+weightRestricted, axisIndices, lowLimits, highLimits);
+
+              } // Subevent loop
+
+              // Reset the range of the subevent axis before proceeding
+              histogramArray->GetAxis(5)->SetRange(0,0);
+
+            } // PbPb MC requirement
+            
+	    } // Jet pT loop 
+          } // Unique flag loop
+        } // Track pT loop
+      } // Centrality loop
+    } // Pairing type loop (same jet/reflected cone)
+  } // Energy-energy correlator type type loop
+}
+/*
  * Loader for full energy-energy-energy correlator 2D-histogram
  *
  * THnSparse for energy-energy-energy correlators:
@@ -1859,7 +2051,7 @@ void EECHistogramManager::LoadEnergyEnergyEnergyCorrelatorFullHistograms(){
 
     // For track pT bins, we are looking at all the tracks above the lower threshold
     histogramArray = (THnSparseD*) fInputFile->Get(fEnergyEnergyCorrelatorHistogramNames[iEnergyEnergyCorrelatorType]);
-    higherTrackPtBin = histogramArray->GetAxis(3)->GetNbins()+1; // Get lowerTrackPT axis? previously got axis(2)
+    higherTrackPtBin = histogramArray->GetAxis(3)->GetNbins()+1; 
 
     // Check the number of dimensions in the histogram array. It will be 6 in older files and 7 in newer files
     // We need this information in newer files to project the desired energy weight from the THnSparse
@@ -4760,6 +4952,8 @@ void EECHistogramManager::SetLoadEnergyEnergyEnergyCorrelators(const bool loadOr
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRL] = loadOrNot;
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRM] = loadOrNot;
   fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorRS] = loadOrNot;
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorUnique] = loadOrNot;
+  fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorAll] = loadOrNot;
 //fLoadEnergyEnergyCorrelatorHistograms[kEnergyEnergyEnergyCorrelatorFull] = loadOrNot;
 }
 

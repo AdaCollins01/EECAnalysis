@@ -42,6 +42,8 @@ EECHistograms::EECHistograms() :
   fhEnergyEnergyEnergyCorrelatorRL(0),
   fhEnergyEnergyEnergyCorrelatorRM(0),
   fhEnergyEnergyEnergyCorrelatorRS(0),
+  fhEnergyEnergyEnergyCorrelatorUnique(0),
+  fhEnergyEnergyEnergyCorrelatorAll(0),
   fhEnergyEnergyEnergyCorrelatorFull(0),
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus(0),
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus(0), 
@@ -99,6 +101,8 @@ EECHistograms::EECHistograms(ConfigurationCard* newCard) :
   fhEnergyEnergyEnergyCorrelatorRL(0),
   fhEnergyEnergyEnergyCorrelatorRM(0),
   fhEnergyEnergyEnergyCorrelatorRS(0),
+  fhEnergyEnergyEnergyCorrelatorUnique(0),
+  fhEnergyEnergyEnergyCorrelatorAll(0),
   fhEnergyEnergyEnergyCorrelatorFull(0),
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus(0),
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus(0),
@@ -156,6 +160,8 @@ EECHistograms::EECHistograms(const EECHistograms& in) :
   fhEnergyEnergyEnergyCorrelatorRL(in.fhEnergyEnergyEnergyCorrelatorRL),
   fhEnergyEnergyEnergyCorrelatorRM(in.fhEnergyEnergyEnergyCorrelatorRM),
   fhEnergyEnergyEnergyCorrelatorRS(in.fhEnergyEnergyEnergyCorrelatorRS),
+  fhEnergyEnergyEnergyCorrelatorUnique(in.fhEnergyEnergyEnergyCorrelatorUnique),
+  fhEnergyEnergyEnergyCorrelatorAll(in.fhEnergyEnergyEnergyCorrelatorAll),
   fhEnergyEnergyEnergyCorrelatorFull(in.fhEnergyEnergyEnergyCorrelatorFull),
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus(in.fhEnergyEnergyCorrelatorEfficiencyVariationPlus),
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus(in.fhEnergyEnergyCorrelatorEfficiencyVariationMinus),
@@ -217,6 +223,8 @@ EECHistograms& EECHistograms::operator=(const EECHistograms& in){
   fhEnergyEnergyEnergyCorrelatorRL = in.fhEnergyEnergyEnergyCorrelatorRL;
   fhEnergyEnergyEnergyCorrelatorRM = in.fhEnergyEnergyEnergyCorrelatorRM;
   fhEnergyEnergyEnergyCorrelatorRS = in.fhEnergyEnergyEnergyCorrelatorRS;
+  fhEnergyEnergyEnergyCorrelatorUnique = in.fhEnergyEnergyEnergyCorrelatorUnique;
+  fhEnergyEnergyEnergyCorrelatorAll = in.fhEnergyEnergyEnergyCorrelatorAll;
   fhEnergyEnergyEnergyCorrelatorFull = in.fhEnergyEnergyEnergyCorrelatorFull;
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus = in.fhEnergyEnergyCorrelatorEfficiencyVariationPlus;
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus = in.fhEnergyEnergyCorrelatorEfficiencyVariationMinus;
@@ -274,6 +282,8 @@ EECHistograms::~EECHistograms(){
   delete fhEnergyEnergyEnergyCorrelatorRL;
   delete fhEnergyEnergyEnergyCorrelatorRM;
   delete fhEnergyEnergyEnergyCorrelatorRS;
+  delete fhEnergyEnergyEnergyCorrelatorUnique;
+  delete fhEnergyEnergyEnergyCorrelatorAll;
   delete fhEnergyEnergyEnergyCorrelatorFull;
   delete fhEnergyEnergyCorrelatorEfficiencyVariationPlus;
   delete fhEnergyEnergyCorrelatorEfficiencyVariationMinus;
@@ -487,6 +497,18 @@ void EECHistograms::CreateHistograms(){
       deltaRBinsEEECFull[iDeltaR] = minDeltaREEECFull + iDeltaR * deltaRbinWidth;
   }
 
+  // Two-option binning for EEECunique and all
+  const Int_t nUniqueFlagBins = 2; 
+  const Double_t minUniqueFlag = 0;
+  const Double_t maxUniqueFlag = 1.0; // 1 = Unique triplet (ABC), 0 = degenerate (AAB)
+
+  Double_t uniqueFlagBins[nUniqueFlagBins+1];
+  Double_t uniqueFlagBinWidth = (maxUniqueFlag - minUniqueFlag) / nUniqueFlagBins;
+  
+  for(int iUniqueFlag = 0; iUniqueFlag <= nUniqueFlagBins; iUniqueFlag++){
+      uniqueFlagBins[iUniqueFlag] = minUniqueFlag + iUniqueFlag * uniqueFlagBinWidth;
+  }
+
   // Binning for the two-dimensional unfolding response
   const Int_t nUnfoldingBins = nDeltaRBinsEEC*nJetPtBinsEEC;
   const Double_t minUnfoldingBin = 0;
@@ -534,6 +556,11 @@ void EECHistograms::CreateHistograms(){
   Int_t nBinsEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t lowBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
   Double_t highBinBorderEnergyEnergyCorrelator[nAxesEnergyEnergyCorrelator];
+  
+  const Int_t nAxesEnergyEnergyEnergyCorrelatorUnique = 8;
+  Int_t nBinsEnergyEnergyEnergyCorrelatorUnique[nAxesEnergyEnergyEnergyCorrelatorUnique];
+  Double_t lowBinBorderEnergyEnergyEnergyCorrelatorUnique[nAxesEnergyEnergyEnergyCorrelatorUnique];
+  Double_t highBinBorderEnergyEnergyEnergyCorrelatorUnique[nAxesEnergyEnergyEnergyCorrelatorUnique];
   
   const Int_t nAxesEnergyEnergyEnergyCorrelatorFull = 8;
   Int_t nBinsEnergyEnergyEnergyCorrelatorFull[nAxesEnergyEnergyEnergyCorrelatorFull];
@@ -866,6 +893,50 @@ void EECHistograms::CreateHistograms(){
   highBinBorderEnergyEnergyCorrelator[6] = maxEnergyWeightEEC; // Index of the last defined energy weight
 
   
+  // ======== THnSparses for energy-energy-energy correlators unique and all ========
+  
+  // Axis 0 for the energy-energy correlator histogram: deltaR
+  nBinsEnergyEnergyEnergyCorrelatorUnique[0] = nDeltaRBinsEEC;        // nBins for deltaR between the two tracks
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[0] = minDeltaREEC;   // low bin border for deltaR
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[0] = maxDeltaREEC;  // high bin border for deltaR
+  
+  // Axis 1 for the energy-energy correlator histogram: jet pT
+  nBinsEnergyEnergyEnergyCorrelatorUnique[1] = nJetPtBinsEEC;         // nBins for jet pT
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[1] = minJetPtEEC;    // low bin border for jet pT
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[1] = maxJetPtEEC;   // high bin border for jet pT
+  
+  // Axis 2 for the energy-energy correlator histogram: track pT
+  nBinsEnergyEnergyEnergyCorrelatorUnique[2] = nTrackPtBinsEEC;        // nBins for track pT
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[2] = minTrackPtEEC;   // low bin border for track pT
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[2] = maxTrackPtEEC;  // high bin border for track pT
+  
+  // Axis 3 for the energy-energy correlator histogram: centrality
+  nBinsEnergyEnergyEnergyCorrelatorUnique[3] = nWideCentralityBins;   // nBins for wide centrality bins
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[3] = minCentrality;  // low bin border for centrality
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[3] = maxCentrality; // high bin border for centrality
+  
+  // Axis 4 for the energy-energy correlator histogram: track pairing type (same jet/reflected cone jet)
+  nBinsEnergyEnergyEnergyCorrelatorUnique[4] = nTrackPairingTypeBins;       // nBins for track pairing types
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[4] = minTrackPairingType;  // low bin border for track pairing type
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[4] = maxTrackPairingType; // high bin border for track pairing type
+  
+  // Axis 5 for the energy-energy correlator histogram: track subevent (only relevant for Monte Carlo)
+  nBinsEnergyEnergyEnergyCorrelatorUnique[5] = nSubeventCombinationBins;       // nBins for subevent combinations (pythia-pythia, pythia-hydjet, hydjet-hydjet)
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[5] = minSubeventCombination;  // low bin border for subevent combinations
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[5] = maxSubeventCombination; // high bin border for subevent combinations
+
+  // Axis 6 for the energy-energy correlator histogram: energy weight index
+  nBinsEnergyEnergyEnergyCorrelatorUnique[6] = nEnergyWeightsEEC;          // Number of energy weights defined in the card
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[6] = minEnergyWeightEEC;  // Index of the first defined energy weight
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[6] = maxEnergyWeightEEC; // Index of the last defined energy weight
+
+  // Axis 7 for the energy-energy correlator histogram: energy weight index
+  nBinsEnergyEnergyEnergyCorrelatorUnique[7] = nUniqueFlagBins;          // Number of flag options (2)
+  lowBinBorderEnergyEnergyEnergyCorrelatorUnique[7] = minUniqueFlag;  // 0 = degenerate (AAB)
+  highBinBorderEnergyEnergyEnergyCorrelatorUnique[7] = maxUniqueFlag; // 1 = unique triplet (ABC)
+  
+  // ======== THnSparses for energy-energy-energy correlator full - for projection  ========
+  
   // Axis 0 for the energy-energy-energy correlator histogram: xCoordinate
   nBinsEnergyEnergyEnergyCorrelatorFull[0] = nDeltaRBinsEEECFull;        // nBins for deltaR between the two tracks
   lowBinBorderEnergyEnergyEnergyCorrelatorFull[0] = minDeltaREEECFull;   // low bin border for deltaR
@@ -919,6 +990,11 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRM = new THnSparseF("energyEnergyEnergyCorrelatorRM", "energyEnergyEnergyCorrelatorRM", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyEnergyCorrelatorRM->Sumw2();
   fhEnergyEnergyEnergyCorrelatorRS = new THnSparseF("energyEnergyEnergyCorrelatorRS", "energyEnergyEnergyCorrelatorRS", nAxesEnergyEnergyCorrelator, nBinsEnergyEnergyCorrelator, lowBinBorderEnergyEnergyCorrelator, highBinBorderEnergyEnergyCorrelator); fhEnergyEnergyEnergyCorrelatorRS->Sumw2();
 
+  // For unique vs. degenerate contributions
+  fhEnergyEnergyEnergyCorrelatorUnique = new THnSparseF("energyEnergyEnergyCorrelatorUnique", "energyEnergyEnergyCorrelatorUnique", nAxesEnergyEnergyEnergyCorrelatorUnique, nBinsEnergyEnergyEnergyCorrelatorUnique, lowBinBorderEnergyEnergyEnergyCorrelatorUnique, highBinBorderEnergyEnergyEnergyCorrelatorUnique); fhEnergyEnergyEnergyCorrelatorUnique->Sumw2();
+  fhEnergyEnergyEnergyCorrelatorAll = new THnSparseF("energyEnergyEnergyCorrelatorAll", "energyEnergyEnergyCorrelatorAll", nAxesEnergyEnergyEnergyCorrelatorUnique, nBinsEnergyEnergyEnergyCorrelatorUnique, lowBinBorderEnergyEnergyEnergyCorrelatorUnique, highBinBorderEnergyEnergyEnergyCorrelatorUnique); fhEnergyEnergyEnergyCorrelatorAll->Sumw2();
+  
+  // For XY projection
   fhEnergyEnergyEnergyCorrelatorFull = new THnSparseF("energyEnergyEnergyCorrelatorFull", "energyEnergyEnergyCorrelatorFull", nAxesEnergyEnergyEnergyCorrelatorFull, nBinsEnergyEnergyEnergyCorrelatorFull, lowBinBorderEnergyEnergyEnergyCorrelatorFull, highBinBorderEnergyEnergyEnergyCorrelatorFull); fhEnergyEnergyEnergyCorrelatorFull->Sumw2();
   
   // Set custom bin borders for histograms
@@ -931,6 +1007,8 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(0,deltaRBinsEEC);                          // RL bins - may change after seeing distribution
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(0,deltaRBinsEEC);                          // RM bins - may change after seeing distribution
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(0,deltaRBinsEEC);                          // RS bins - may change after seeing distribution
+  fhEnergyEnergyEnergyCorrelatorUnique->SetBinEdges(0,deltaRBinsEEC);                      // RL bins - may change after seeing distribution
+  fhEnergyEnergyEnergyCorrelatorAll->SetBinEdges(0,deltaRBinsEEC);                          // RL bins - may change after seeing distribution
   fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(0,deltaRBinsEEECFull);                        // Full bins - may change after seeing distribution
   fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(1,deltaRBinsEEECFull);                        // yCoordinate also needs deltaR distribution
   
@@ -943,6 +1021,8 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(1,jetPtBinsEEC);                           // Jet pT bins for EEEC RL
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(1,jetPtBinsEEC);                           // Jet pT bins for EEEC RM
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(1,jetPtBinsEEC);                           // Jet pT bins for EEEC RS
+  fhEnergyEnergyEnergyCorrelatorUnique->SetBinEdges(1,jetPtBinsEEC);                       // Jet pT bins for EEEC Unique
+  fhEnergyEnergyEnergyCorrelatorAll->SetBinEdges(1,jetPtBinsEEC);                           // Jet pT bins for EEEC All
   fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(2,jetPtBinsEEC);                         // Jet pT bins for EEEC Full
   
   fhEnergyEnergyCorrelator->SetBinEdges(2,trackPtBinsEEC);                                 // Track pT bins
@@ -954,6 +1034,8 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(2,trackPtBinsEEC);                         // Track pT bins for EEEC RL
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(2,trackPtBinsEEC);                         // Track pT bins for EEEC RM
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(2,trackPtBinsEEC);                         // Track pT bins for EEEC RS
+  fhEnergyEnergyEnergyCorrelatorUnique->SetBinEdges(2,trackPtBinsEEC);                     // Track pT bins for EEEC Unique
+  fhEnergyEnergyEnergyCorrelatorAll->SetBinEdges(2,trackPtBinsEEC);                         // Track pT bins for EEEC All
   fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(3,trackPtBinsEEC);                       // Track pT bins for EEEC Full
   
   fhEnergyEnergyCorrelator->SetBinEdges(3,wideCentralityBins);                             // Centrality bins
@@ -965,8 +1047,13 @@ void EECHistograms::CreateHistograms(){
   fhEnergyEnergyEnergyCorrelatorRL->SetBinEdges(3,wideCentralityBins);                     // Centrality bins for EEEC RL
   fhEnergyEnergyEnergyCorrelatorRM->SetBinEdges(3,wideCentralityBins);                     // Centrality bins for EEEC RM
   fhEnergyEnergyEnergyCorrelatorRS->SetBinEdges(3,wideCentralityBins);                     // Centrality bins for EEEC RS
+  fhEnergyEnergyEnergyCorrelatorUnique->SetBinEdges(3,wideCentralityBins);                 // Centrality bins for EEEC Unique
+  fhEnergyEnergyEnergyCorrelatorAll->SetBinEdges(3,wideCentralityBins);                     // Centrality bins for EEEC All
   fhEnergyEnergyEnergyCorrelatorFull->SetBinEdges(4,wideCentralityBins);                   // Centrality bins for EEEC Full
   
+  fhEnergyEnergyEnergyCorrelatorUnique->SetBinEdges(7,uniqueFlagBins);                 // Flag for EEEC Unique
+  fhEnergyEnergyEnergyCorrelatorAll->SetBinEdges(7,uniqueFlagBins);                     // Flag for EEEC Alli
+
   // ======== THnSparses for jet pT closures ========
   
   // Axis 0 for the jet pT closure histogram: generator level jet pT
@@ -1332,6 +1419,8 @@ void EECHistograms::Write() const{
   fhEnergyEnergyEnergyCorrelatorRL->Write();
   fhEnergyEnergyEnergyCorrelatorRM->Write();
   fhEnergyEnergyEnergyCorrelatorRS->Write();
+  fhEnergyEnergyEnergyCorrelatorUnique->Write();
+  fhEnergyEnergyEnergyCorrelatorAll->Write();
   fhEnergyEnergyEnergyCorrelatorFull->Write();
   fhEnergyEnergyCorrelatorEfficiencyVariationPlus->Write();
   fhEnergyEnergyCorrelatorEfficiencyVariationMinus->Write();
