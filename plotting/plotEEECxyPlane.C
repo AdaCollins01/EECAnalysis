@@ -11,18 +11,18 @@ void plotEEECxyPlane(){
 
   // Characteristics that are often changed
   bool is2d = true; // If true, 2d plot is made. If false, 3d plot is made
-  bool normalizeDistributions = true; // If true, distributions are normalized. If false, raw counts are used
-  TString dateFileString = "06222025";
+  bool normalizeDistributions = false; // If true, distributions are normalized. If false, raw counts are used
+  TString dateFileString = "07012025";
 
   // File from which the E3C are read
-  TString inputFileName = "projected_noLog_xyPlaneFull_06172025.root";
-  
+  TString inputFileName = "jetRadius_0.8/projected_xyPlane_RL-0.2-0.3_06302025.root";
+
   // Open the input file
   TFile* inputFile = TFile::Open(inputFileName);
   
   if(inputFile == NULL){
     cout << "Error! The file " << inputFileName.Data() << " does not exist!" << endl;
-    cout << "Maybe you forgot the data/ folder path?" << endl;
+    cout << "Maybe you forgot the jetRadius_x/ folder path?" << endl;
     cout << "Will not execute the code" << endl;
     return;
   }
@@ -44,7 +44,10 @@ void plotEEECxyPlane(){
   comparedCentralityBin.push_back(std::make_pair(-1,100));
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
-  comparedJetPtBin.push_back(std::make_pair(160,180));
+  comparedJetPtBin.push_back(std::make_pair(120,140));
+  
+  std::vector<std::pair<double,double>> comparedRL;
+  comparedRL.push_back(std::make_pair(0.2,0.3)); // In other words, x <= RL < y --> fix this in title
 
   std::vector<double> comparedTrackPtBin;
   comparedTrackPtBin.push_back(1.0);
@@ -108,12 +111,17 @@ void plotEEECxyPlane(){
   drawer->SetTitleSizeY(0.05);
 
   TString jetPtFileString = Form("J=%.0f-%.0f", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second);
-  TString trackPtFileString = Form("T=%.0f", comparedTrackPtBin.at(0));
+  TString RLFileString = Form("RL=%.1f-%.1f", comparedRL.at(0).first, comparedRL.at(0).second);
+  //TString RLFileString = Form("RL=All");
+  TString trackPtFileString = Form("T=%.1f", comparedTrackPtBin.at(0));
+  TString ptTitleString = "";
   TString normalizeFileString = "";
   if(normalizeDistributions) {normalizeFileString = "Normalized_";}
 
-  TString ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} = %.0f GeV", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second, comparedTrackPtBin.at(0));
-  if(normalizeDistributions) {ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} = %.0f GeV, Normalized", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second, comparedTrackPtBin.at(0));}
+
+  if(normalizeDistributions) { ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} = %.1f GeV, %.1f < R_{L} < %.1f, Normalized", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second, comparedTrackPtBin.at(0), comparedRL.at(0).first, comparedRL.at(0).second);} 
+  else { ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} = %.1f GeV, %.1f < R_{L} < %.1f", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second, comparedTrackPtBin.at(0), comparedRL.at(0).first, comparedRL.at(0).second);} 
+ //else { ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} = %.1f GeV", comparedJetPtBin.at(0).first, comparedJetPtBin.at(0).second, comparedTrackPtBin.at(0));} 
 
   // Draw the histogram to canvas
      for(auto jetPtBin : comparedJetPtBin){
@@ -124,7 +132,7 @@ void plotEEECxyPlane(){
 	if(normalizeDistributions){
 		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,24);
 	} else {
-		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,3000);
+//		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,3500);
 	}
 
         if(is2d){
@@ -140,8 +148,8 @@ gPad->Update();
   
   // Save figure
   if(is2d){
-	    gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/2d_%s%s_%s_%s.pdf", normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), dateFileString.Data()));
+	    gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/jetRadius_0.8/ogAxis/RL=%.1f-%.1f/2d_%s%s_%s_%s_%s.pdf", comparedRL.at(0).first, comparedRL.at(0).second, normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), dateFileString.Data(), RLFileString.Data()));
   } else {
-  	gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/3d_%s%s_%s_%s.pdf", normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), dateFileString.Data()));
+  	gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/jetRadius_0.8/ogAxis/RL=%.1f-%.1f/3d_%s%s_%s_%s_%s.pdf",comparedRL.at(0).first, comparedRL.at(0).second, normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), dateFileString.Data(), RLFileString.Data()));
   }
 }
