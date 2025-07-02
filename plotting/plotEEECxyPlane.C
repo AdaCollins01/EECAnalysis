@@ -20,9 +20,6 @@ void plotEEECxyPlane(){
   TString dateFileString = "07022025";
   TString jetRadiusString = "0.8"; // Or 0.4
 
-  // File from which the E3C are read
-  TString inputFileName = Form("jetRadius_%s/projected_xyPlane_RL-0.2-0.3_06302025.root", jetRadiusString.Data());
-  
   // Bin vectors 
   std::vector<std::pair<double,double>> comparedCentralityBin;
   comparedCentralityBin.push_back(std::make_pair(-1,100));
@@ -41,59 +38,70 @@ void plotEEECxyPlane(){
   compared2d.push_back(true);
   compared2d.push_back(false); // Makes 2d plot then 3d plot
 
-  // Open the input file
-  TFile* inputFile = TFile::Open(inputFileName);
-  
-  if(inputFile == NULL){
-    cout << "Error! The file " << inputFileName.Data() << " does not exist!" << endl;
-    cout << "Maybe you forgot the jetRadius_x/ folder path?" << endl;
-    cout << "Will not execute the code" << endl;
-    return;
-  }
-  
-  // Load the card from the file
-  EECCard* card = new EECCard(inputFile);
-  
   // ====================================================
-  //  Initial configuration for the plotting
-  // ====================================================
-  
-  // Number of bins from the card
-  const int nCentralityBinsEEC = card->GetNCentralityBins();
-  const int nJetPtBinsEEC = card->GetNJetPtBinsEEC();
-  const int nTrackPtBinsEEC = card->GetNTrackPtBinsEEC();
-
-  // Create and setup a new histogram manager to project and handle the histograms
-  EECHistogramManager* histograms = new EECHistogramManager(inputFile,card); // Should already know what to do
-  
-  int iJetPt, iTrackPt;
-  int iCentrality = 0;
-  int iEnergyEnergyCorrelatorType = EECHistogramManager::kEnergyEnergyEnergyCorrelatorFull;
-  int iPairingType = EECHistograms::kSameJetPair;
-  int iSubevent = EECHistograms::knSubeventCombinations;
-  
-  // Initialize the jet response matrices to NULL
-  TH2D* hEnergyEnergyEnergyCorrelatorFull[nJetPtBinsEEC][nTrackPtBinsEEC];
-
-      for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
-         for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
-        hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = NULL;
-         } // Track pT
-      } // Jet pT
-
-  // ====================================================
-  // Read E3C from the file
+  // Loop through characteristics
   // ====================================================
  
  // Manual enumeration
  int i = 0;
  int j = 0;
  int k = 0;
+ 
  for (auto bool2d : compared2d){
+   i = 0;
    for(auto RLBin : comparedRL){
+     j = 0;
      for(auto jetPtBin : comparedJetPtBin){
-        for(auto trackPtBin : comparedTrackPtBin){
+        k = 0;
+	for(auto trackPtBin : comparedTrackPtBin){
 
+	  // File from which the E3C are read
+	  TString inputFileName = Form("jetRadius_%s/projected_xyPlane_RL-%.1f-%.1f_06302025.root", jetRadiusString.Data(), comparedRL.at(i).first, comparedRL.at(i).second);
+	  
+	  // Open the input file
+	  TFile* inputFile = TFile::Open(inputFileName);
+	  
+	  if(inputFile == NULL){
+	    cout << "Error! The file " << inputFileName.Data() << " does not exist!" << endl;
+	    cout << "Maybe you forgot the jetRadius_x/ folder path? Or added the incorrect date?" << endl;
+	    cout << "Will not execute the code" << endl;
+	    return;
+	  }
+	  
+	  // Load the card from the file
+	  EECCard* card = new EECCard(inputFile);
+	  
+	  // ====================================================
+	  //  Initial configuration for the plotting
+	  // ====================================================
+	  
+	  // Number of bins from the card
+	  const int nCentralityBinsEEC = card->GetNCentralityBins();
+	  const int nJetPtBinsEEC = card->GetNJetPtBinsEEC();
+	  const int nTrackPtBinsEEC = card->GetNTrackPtBinsEEC();
+	
+	  // Create and setup a new histogram manager to project and handle the histograms
+	  EECHistogramManager* histograms = new EECHistogramManager(inputFile,card); // Should already know what to do
+	  
+	  int iJetPt, iTrackPt;
+	  int iCentrality = 0;
+	  int iEnergyEnergyCorrelatorType = EECHistogramManager::kEnergyEnergyEnergyCorrelatorFull;
+	  int iPairingType = EECHistograms::kSameJetPair;
+	  int iSubevent = EECHistograms::knSubeventCombinations;
+	  
+	  // Initialize the jet response matrices to NULL
+	  TH2D* hEnergyEnergyEnergyCorrelatorFull[nJetPtBinsEEC][nTrackPtBinsEEC];
+	
+	      for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
+	         for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
+	        hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = NULL;
+	         } // Track pT
+	      } // Jet pT
+
+	// ====================================================
+	//  Read in the E3C
+	// ====================================================
+        
 	iJetPt = card->FindBinIndexJetPtEEC(jetPtBin);
         iTrackPt = card->GetBinIndexTrackPtEEC(trackPtBin);
 	is2d = bool2d;
@@ -112,7 +120,11 @@ void plotEEECxyPlane(){
 	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, iTrackPt, iPairingType, iSubevent);
           } // Normalization  
 
-	  // Prepare a JDrawer for drawing purposes
+      // ====================================================
+      // Plot each E3C
+      // ====================================================
+
+	// Prepare a JDrawer for drawing purposes
 	  JDrawer *drawer = new JDrawer();
 	  if(logAxis) {drawer->SetLogZ(true);}
 	  drawer->SetLeftMargin(0.13);
@@ -169,15 +181,13 @@ void plotEEECxyPlane(){
 	   gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/jetRadius_%s/%s/%s/3d_%s%s_%s_%s_%s.pdf", jetRadiusString.Data(), axisFileString.Data(), RLFileString.Data(), normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), RLFileString.Data(), dateFileString.Data()));
 	  } 
 
+       if(k < comparedTrackPtBin.size() - 1) {k++;}
        } // Track pT
+     if(j < comparedJetPtBin.size() - 1) {j++;}
      } // Jet pT
+   if(i < comparedRL.size() - 1) {i++;}
    } // RL
 
-   // Manual enumeration without going out of bounds 	
-   if(i < comparedRL.size() - 1) {i++;}
-   if(j < comparedJetPtBin.size() - 1) {j++;}
-   if(k < comparedTrackPtBin.size() - 1) {k++;}
- 
  } // is2d
 
 } // End script
