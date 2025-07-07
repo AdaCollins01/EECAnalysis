@@ -13,11 +13,12 @@ void plotEEECxyPlane(){
   //  Frequently changed characteristics
   // ====================================================
   
-  bool is2d; // If true, 2d plot is made. If false, 3d plot is made
+  bool is2d; // Helper to loop through 2d and 3d plots
   bool allRL = false; // To set this as true, comparedRL = (0.0, 0.0)
   bool normalizeDistributions = true; // If true, distributions are normalized. If false, raw counts are used
-  bool logAxis = false;
-  TString dateFileString = "07022025";
+  bool logAxis = true;
+
+  TString dateFileString = "07072025";
   TString jetRadiusString = "0.8"; // Or 0.4
 
   // Bin vectors 
@@ -26,14 +27,25 @@ void plotEEECxyPlane(){
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+//  comparedJetPtBin.push_back(std::make_pair(140,160));
+//  comparedJetPtBin.push_back(std::make_pair(160,180));
+//  comparedJetPtBin.push_back(std::make_pair(180,200));
   
-  std::vector<std::pair<double,double>> comparedRL;
-  comparedRL.push_back(std::make_pair(0.2,0.3)); // In other words, x <= RL < y 
+  std::vector<std::pair<double,double>> comparedRL; // Set (0.0, 0.0) if RL=All
+//  comparedRL.push_back(std::make_pair(0.0,0.0)); 
+  comparedRL.push_back(std::make_pair(0.3,0.4)); 
+  comparedRL.push_back(std::make_pair(0.4,0.5)); 
+  comparedRL.push_back(std::make_pair(0.5,0.6)); 
+  comparedRL.push_back(std::make_pair(0.6,0.7)); 
+  comparedRL.push_back(std::make_pair(0.7,0.8)); 
 
   std::vector<double> comparedTrackPtBin;
+//  comparedTrackPtBin.push_back(0.7);
   comparedTrackPtBin.push_back(1.0);
-  
+//  comparedTrackPtBin.push_back(2.0);
+//  comparedTrackPtBin.push_back(3.0);
+//  comparedTrackPtBin.push_back(4.0);
+ 
   std::vector<bool> compared2d;
   compared2d.push_back(true);
   compared2d.push_back(false); // Makes 2d plot then 3d plot
@@ -55,8 +67,14 @@ void plotEEECxyPlane(){
         k = 0;
 	for(auto trackPtBin : comparedTrackPtBin){
 
+  	  // Set allRL boolean
+	  allRL = false; // Reset it first
+  	  if(comparedRL.at(i).second == 0.0) {allRL = true;}
+	 
 	  // File from which the E3C are read
 	  TString inputFileName = Form("jetRadius_%s/projected_xyPlane_RL-%.1f-%.1f_06302025.root", jetRadiusString.Data(), comparedRL.at(i).first, comparedRL.at(i).second);
+	  
+	  if(allRL) {inputFileName = Form("jetRadius_%s/projected_xyPlane_RL-All_06302025.root", jetRadiusString.Data());}
 	  
 	  // Open the input file
 	  TFile* inputFile = TFile::Open(inputFileName);
@@ -138,9 +156,6 @@ void plotEEECxyPlane(){
 	  drawer->SetTitleSizeX(0.05);
 	  drawer->SetTitleSizeY(0.05);
 	  
-	  // Set allRL boolean
-	  if(comparedRL.at(i).second == 0.0) {allRL = true;}
-
 	  TString jetPtFileString = Form("J=%.0f-%.0f", comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second);
 	  TString RLFileString = Form("RL=%.1f-%.1f", comparedRL.at(i).first, comparedRL.at(i).second);
 	 
@@ -153,18 +168,22 @@ void plotEEECxyPlane(){
 	  
 	  TString axisFileString = "ogAxis";
 	  if(logAxis) {axisFileString = "logAxis";}
+	  if(normalizeDistributions) {axisFileString = "normalAxis";}
+	  if(logAxis && normalizeDistributions) {axisFileString = "normalLogAxis";}
 	
 	
-	  if(normalizeDistributions) { ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV, %.1f #leq R_{L} < %.1f, Normalized", comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k), comparedRL.at(i).first, comparedRL.at(i).second);} 
-	  else if(allRL) { ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV", comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k));} 
-	  else { ptTitleString = Form("%.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV, %.1f #leq R_{L} < %.1f", comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k), comparedRL.at(i).first, comparedRL.at(i).second);} 
-	
+	  if(normalizeDistributions) { 
+	  	if(allRL){
+		    ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV, Normalized", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k));}
+		else{    
+		    ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV, %.1f #leq R_{L} < %.1f, Normalized", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k), comparedRL.at(i).first, comparedRL.at(i).second);}}
+	  else if(allRL) {ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k));} 
+	  else { ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV, %.1f #leq R_{L} < %.1f", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k), comparedRL.at(i).first, comparedRL.at(i).second);} 
+
 	  // Draw the histogram to canvas
-	if(normalizeDistributions){
-//		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,24);
-	} else {
-//		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,3500);
-	}
+	if(normalizeDistributions && logAxis){
+//		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,10);
+	} 
 
         if(is2d){
 		drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt], "X", "Y", 0, 0, ptTitleString, "colz");
