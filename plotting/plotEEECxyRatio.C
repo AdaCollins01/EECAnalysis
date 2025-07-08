@@ -5,20 +5,18 @@
 #include "EECDrawer.h"
 
 /*
- * Macro for plotting ratios of E3C projected into XY plane. 
+ * Macro for plotting ratios of E3C projected into XY plane. Currently only suited to plot ratios of track pT,
+ * should be generalized in the future. 
  */
 void plotEEECxyRatio(){
 
   // ====================================================
   //  Frequently changed characteristics
   // ====================================================
-  
-  bool is2d; // Helper to loop through 2d and 3d plots
-  bool allRL = false; // To set this as true, comparedRL = (0.0, 0.0)
-  bool normalizeDistributions = true; // If true, distributions are normalized. If false, raw counts are used
-  bool logAxis = false;
 
-  TString dateFileString = "07072025";
+  bool subtraction = false; // Does (track pt > 0.7) - (track pt > 4.0)
+
+  TString dateFileString = "07082025";
   TString jetRadiusString = "0.8"; // Or 0.4
 
   // Bin vectors 
@@ -27,9 +25,9 @@ void plotEEECxyRatio(){
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-//  comparedJetPtBin.push_back(std::make_pair(140,160));
-//  comparedJetPtBin.push_back(std::make_pair(160,180));
-//  comparedJetPtBin.push_back(std::make_pair(180,200));
+  comparedJetPtBin.push_back(std::make_pair(140,160));
+  comparedJetPtBin.push_back(std::make_pair(160,180));
+  comparedJetPtBin.push_back(std::make_pair(180,200));
   
   std::vector<std::pair<double,double>> comparedRL; // Set (0.0, 0.0) if RL=All
   comparedRL.push_back(std::make_pair(0.0,0.0)); 
@@ -45,10 +43,6 @@ void plotEEECxyRatio(){
 //  comparedTrackPtBin.push_back(2.0);
 //  comparedTrackPtBin.push_back(3.0);
   comparedTrackPtBin.push_back(4.0);
- 
-  std::vector<bool> compared2d;
-  compared2d.push_back(true);
-  compared2d.push_back(false); // Makes 2d plot then 3d plot
 
   // ====================================================
   // Loop through characteristics
@@ -59,7 +53,6 @@ void plotEEECxyRatio(){
  int j = 0;
  int k = 0;
  
- for (auto bool2d : compared2d){
    i = 0;
    for(auto RLBin : comparedRL){
      j = 0;
@@ -113,8 +106,8 @@ void plotEEECxyRatio(){
 	  // Create two NULL histogram objects
 	  TH2D* hEnergyEnergyEnergyCorrelatorFirst[nJetPtBinsEEC][nTrackPtBinsEEC]; // Fill with one track pt bin
 	  TH2D* hEnergyEnergyEnergyCorrelatorSecond[nJetPtBinsEEC][nTrackPtBinsEEC]; // Fill with the other track pt bin
-	  TH2D* hEnergyEnergyEnergyCorrelatorFull[nJetPtBinsEEC][nTrackPtBinsEEC]; // Fill with the ratio
-	
+          TH1D* ratioHist;
+
 	      for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
 	         for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
 	        hEnergyEnergyEnergyCorrelatorFirst[iJetPt][iTrackPt] = NULL;
@@ -131,34 +124,26 @@ void plotEEECxyRatio(){
 	iTrackPt = trackPtFirst;
         trackPtSecond = card->GetBinIndexTrackPtEEC(comparedTrackPtBin.at(1));
 
-        is2d = bool2d;
-
-	if(normalizeDistributions){
-            std::pair<double, double> drawingRange = std::make_pair(0.001, 0.999);
-	    double epsilon = 0.0001;
-
 	hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtFirst] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, trackPtFirst, iPairingType, iSubevent);
 	hEnergyEnergyEnergyCorrelatorSecond[iJetPt][trackPtSecond] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, trackPtSecond, iPairingType, iSubevent);
 
-//cout << hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtFirst]->GetBinContent(1, 1) << endl;
-//cout << hEnergyEnergyEnergyCorrelatorSecond[iJetPt][trackPtSecond]->GetBinContent(1,1) << endl;
 
-	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = hEnergyEnergyEnergyCorrelatorSecond[iJetPt][trackPtSecond];
-	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->Divide(hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtFirst]);
+	int yLowBin = hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtFirst]->GetYaxis()->FindBin(0.0);
+	int yHighBin = hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtFirst]->GetYaxis()->FindBin(0.2);
 
-//cout << hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetBinContent(1,1) << endl;
+	// Project histograms
+	TH1D* projEEECFirst = hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtFirst]->ProjectionX("projEEECFirst", yLowBin, yHighBin);
+	TH1D* projEEECSecond = hEnergyEnergyEnergyCorrelatorSecond[iJetPt][trackPtSecond]->ProjectionX("projEEECSecond", yLowBin, yHighBin);
 
-	int lowNormalizationBin = hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetXaxis()->FindBin(drawingRange.first + epsilon);
-           int highNormalizationBin = hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetXaxis()->FindBin(drawingRange.second - epsilon);
+	// Normalize them
+	double integralFirst = projEEECFirst->Integral("width");
+	double integralSecond = projEEECSecond->Integral("width");
+	projEEECFirst->Scale(1.0 / integralFirst);
+	projEEECSecond->Scale(1.0 / integralSecond);
 
-            hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->Scale(1 / hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->Integral(lowNormalizationBin, highNormalizationBin, lowNormalizationBin, highNormalizationBin, "width"));
-          } else {
-	hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtFirst] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, trackPtFirst, iPairingType, iSubevent);
-	hEnergyEnergyEnergyCorrelatorSecond[iJetPt][trackPtSecond] = histograms->GetHistogramEnergyEnergyEnergyCorrelatorFull(iEnergyEnergyCorrelatorType, iCentrality, iJetPt, trackPtSecond, iPairingType, iSubevent);
-	
-	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt] = hEnergyEnergyEnergyCorrelatorSecond[iJetPt][trackPtSecond];
-	hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->Divide(hEnergyEnergyEnergyCorrelatorFirst[iJetPt][trackPtSecond]);
-          } // Normalization  
+	// Calculate ratio
+	ratioHist = (TH1D*) projEEECSecond->Clone("ratioHist");
+	ratioHist->Divide(projEEECFirst);
 
       // ====================================================
       // Plot each E3C
@@ -167,7 +152,7 @@ void plotEEECxyRatio(){
 	// Prepare a JDrawer for drawing purposes
 	  JDrawer *drawer = new JDrawer();
 	  if(logAxis) {drawer->SetLogZ(true);}
-	  drawer->SetLeftMargin(0.13);
+	  drawer->SetLeftMargin(0.16);
 	  drawer->SetRightMargin(0.16);
 	  drawer->SetTopMargin(0.13);
 	  drawer->SetTitleOffsetX(1.2);
@@ -185,40 +170,21 @@ void plotEEECxyRatio(){
 	  
 	  TString trackPtFileString = Form("T=%.1f_%.1f", comparedTrackPtBin.at(1), comparedTrackPtBin.at(0));
 	  TString ptTitleString = "";
-	  TString normalizeFileString = "";
-	  if(normalizeDistributions) {normalizeFileString = "Normalized_";}
+	  TString commentFileString = "ratio";
+	  if(subtract) {commentFileString = "subtraction"};
 	  
 	  TString axisFileString = "ratio";
 	
-	
-	  if(normalizeDistributions) { 
-	  	if(allRL){
-		    ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, #frac{Track p_{T} #geq %.1f GeV}{Track p_{T} #geq %.1f GeV}, Normalized", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(1), comparedTrackPtBin.at(0));}
-		else{    
-		    ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV, %.1f #leq R_{L} < %.1f, Normalized", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k), comparedRL.at(i).first, comparedRL.at(i).second);}}
-	  else if(allRL) {ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k));} 
-	  else { ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV, Track p_{T} #geq %.1f GeV, %.1f #leq R_{L} < %.1f", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second, comparedTrackPtBin.at(k), comparedRL.at(i).first, comparedRL.at(i).second);} 
-
+	   ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second);}
+	  
 	  // Draw the histogram to canvas
-	if(normalizeDistributions ){
-//		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetZaxis()->SetRangeUser(0.01,10);
-		hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt]->GetYaxis()->SetRangeUser(0.0001,0.2);
-	} 
-
-        if(is2d){
-		drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt], "X", "Y", 0, 0, ptTitleString, "colz");
-	} else {
-	drawer->DrawHistogram(hEnergyEnergyEnergyCorrelatorFull[iJetPt][iTrackPt], "X", "Y", 45, 135, ptTitleString, "lego2z");}
+	drawer->DrawHistogram(ratioHist, "X", Form("#frac{Track p_{T} #geq %.1f GeV}{Track p_{T} #geq %.1f GeV}", comparedTrackPtBin.at(1), comparedTrackPtBin.at(0)), ptTitleString);
 	
 	gPad->Modified();
 	gPad->Update();
 	  
 	  // Save figure
-	  if(is2d){
-	   gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/jetRadius_%s/%s/%s/2d_%s%s_%s_%s_%s.pdf", jetRadiusString.Data(),axisFileString.Data(), RLFileString.Data(), normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), RLFileString.Data(), dateFileString.Data()));
-	  } else {
-	   gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/jetRadius_%s/%s/%s/3d_%s%s_%s_%s_%s.pdf", jetRadiusString.Data(), axisFileString.Data(), RLFileString.Data(), normalizeFileString.Data(), jetPtFileString.Data(), trackPtFileString.Data(), RLFileString.Data(), dateFileString.Data()));
-	  } 
+	   gPad->GetCanvas()->SaveAs(Form("figures/xyPlane/jetRadius_%s/%s/%s/%s_%s_%s_%s_%s.pdf", jetRadiusString.Data(), axisFileString.Data(), RLFileString.Data(), commentFileString.Data(),jetPtFileString.Data(), trackPtFileString.Data(), RLFileString.Data(), dateFileString.Data()));
 
        if(k < comparedTrackPtBin.size() - 1) {k++;}
     //   } // Track pT
