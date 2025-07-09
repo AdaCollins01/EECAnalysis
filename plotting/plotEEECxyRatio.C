@@ -14,9 +14,13 @@ void plotEEECxyRatio(){
   //  Frequently changed characteristics
   // ====================================================
 
-  bool subtraction = false; // Does (track pt > 0.7) - (track pt > 4.0)
+  bool subtract = true; // Does (track pt > 0.7) - (track pt > 4.0)
+  bool ratio = false; // Does (track pt > 0.7) / (track pt > 4.0)
+  bool normalizeArea = false; // Normalizes area to be 1. Otherwise, normalizes by NJets
+  bool allRL = false;
+  bool logAxis = true;
 
-  TString dateFileString = "07082025";
+  TString dateFileString = "07092025";
   TString jetRadiusString = "0.8"; // Or 0.4
 
   // Bin vectors 
@@ -25,9 +29,9 @@ void plotEEECxyRatio(){
 
   std::vector<std::pair<double,double>> comparedJetPtBin;
   comparedJetPtBin.push_back(std::make_pair(120,140));
-  comparedJetPtBin.push_back(std::make_pair(140,160));
-  comparedJetPtBin.push_back(std::make_pair(160,180));
-  comparedJetPtBin.push_back(std::make_pair(180,200));
+//  comparedJetPtBin.push_back(std::make_pair(140,160));
+//  comparedJetPtBin.push_back(std::make_pair(160,180));
+//  comparedJetPtBin.push_back(std::make_pair(180,200));
   
   std::vector<std::pair<double,double>> comparedRL; // Set (0.0, 0.0) if RL=All
   comparedRL.push_back(std::make_pair(0.0,0.0)); 
@@ -106,7 +110,7 @@ void plotEEECxyRatio(){
 	  // Create two NULL histogram objects
 	  TH2D* hEnergyEnergyEnergyCorrelatorFirst[nJetPtBinsEEC][nTrackPtBinsEEC]; // Fill with one track pt bin
 	  TH2D* hEnergyEnergyEnergyCorrelatorSecond[nJetPtBinsEEC][nTrackPtBinsEEC]; // Fill with the other track pt bin
-          TH1D* ratioHist;
+          TH1D* compareHist;
 
 	      for(int iJetPt = 0; iJetPt < nJetPtBinsEEC; iJetPt++){
 	         for(int iTrackPt = 0; iTrackPt < nTrackPtBinsEEC; iTrackPt++){
@@ -136,14 +140,29 @@ void plotEEECxyRatio(){
 	TH1D* projEEECSecond = hEnergyEnergyEnergyCorrelatorSecond[iJetPt][trackPtSecond]->ProjectionX("projEEECSecond", yLowBin, yHighBin);
 
 	// Normalize them
-	double integralFirst = projEEECFirst->Integral("width");
-	double integralSecond = projEEECSecond->Integral("width");
-	projEEECFirst->Scale(1.0 / integralFirst);
-	projEEECSecond->Scale(1.0 / integralSecond);
+	if(normalizeArea){
+		double integralFirst = projEEECFirst->Integral("width");
+		double integralSecond = projEEECSecond->Integral("width");
+		projEEECFirst->Scale(1.0 / integralFirst);
+		projEEECSecond->Scale(1.0 / integralSecond);
+	}
+	else{ // Normalize by NJets
+		std::pair<double,double> jetPtBinBorders = card->GetBinBordersJetPtEEC(iJetPt);
+        	double normalizationFactor = histograms->GetJetPtIntegral(iCentrality, jetPtBinBorders.first, jetPtBinBorders.second);
+		projEEECFirst->Scale(1.0 / normalizationFactor);
+		projEEECSecond->Scale(1.0 / normalizationFactor);
+	}
 
-	// Calculate ratio
-	ratioHist = (TH1D*) projEEECSecond->Clone("ratioHist");
-	ratioHist->Divide(projEEECFirst);
+	// Calculate comparison
+	if(ratio){
+		compareHist = (TH1D*) projEEECSecond->Clone("compareHist");
+		compareHist->Divide(projEEECFirst);
+	}
+	
+	if(subtract){
+		compareHist = (TH1D*) projEEECFirst->Clone("compareHist");
+		compareHist->Add(projEEECSecond, -1); // (track pt > 0.7) - (track pt > 4.0
+	}
 
       // ====================================================
       // Plot each E3C
@@ -151,7 +170,7 @@ void plotEEECxyRatio(){
 
 	// Prepare a JDrawer for drawing purposes
 	  JDrawer *drawer = new JDrawer();
-	  if(logAxis) {drawer->SetLogZ(true);}
+	  if(logAxis) {drawer->SetLogY(true);}
 	  drawer->SetLeftMargin(0.16);
 	  drawer->SetRightMargin(0.16);
 	  drawer->SetTopMargin(0.13);
@@ -170,15 +189,20 @@ void plotEEECxyRatio(){
 	  
 	  TString trackPtFileString = Form("T=%.1f_%.1f", comparedTrackPtBin.at(1), comparedTrackPtBin.at(0));
 	  TString ptTitleString = "";
-	  TString commentFileString = "ratio";
-	  if(subtract) {commentFileString = "subtraction"};
-	  
-	  TString axisFileString = "ratio";
+	  TString compareTitleString = "";
+	  TString commentFileString = "";
+	  if(subtract) {commentFileString = "subtraction";}
+	  if(ratio) {commentFileString = "ratio";}
+	  if(subtract && logAxis) {commentFileString = "subtraction_logAxis";}
+	  if(ratio && logAxis) {commentFileString = "ratio_logAxis";}
+	  TString axisFileString = "ratio"; // Maybe rename directory
 	
-	   ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second);}
-	  
+	  ptTitleString = Form("R_{Jet} = %s, %.0f GeV < Jet p_{T} < %.0f GeV", jetRadiusString.Data(), comparedJetPtBin.at(j).first, comparedJetPtBin.at(j).second);
+	  if(ratio) {compareTitleString = Form("#frac{Track p_{T} #geq %.1f GeV}{Track p_{T} #geq %.1f GeV}", comparedTrackPtBin.at(1), comparedTrackPtBin.at(0));}
+	  if(subtract) {compareTitleString = Form("(Track p_{T} #geq %.1f GeV) - (Track p_{T} #geq %.1f GeV)", comparedTrackPtBin.at(0), comparedTrackPtBin.at(1));}
+
 	  // Draw the histogram to canvas
-	drawer->DrawHistogram(ratioHist, "X", Form("#frac{Track p_{T} #geq %.1f GeV}{Track p_{T} #geq %.1f GeV}", comparedTrackPtBin.at(1), comparedTrackPtBin.at(0)), ptTitleString);
+	drawer->DrawHistogram(compareHist, "X", compareTitleString, ptTitleString);
 	
 	gPad->Modified();
 	gPad->Update();
@@ -192,7 +216,5 @@ void plotEEECxyRatio(){
      } // Jet pT
    if(i < comparedRL.size() - 1) {i++;}
    } // RL
-
- } // is2d
 
 } // End script
