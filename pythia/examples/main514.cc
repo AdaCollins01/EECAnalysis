@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <string>
+#include <sstream>
+#include <iomanip>
 #include "fastjet/ClusterSequence.hh"
 #include "TH2.h"
 #include "TMath.h"
@@ -15,6 +18,12 @@ using namespace std;
 
 // !!!Don't forget to add to Makefile
 
+std::string floatToString(float val, int precision = 1) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(precision) << val;
+    return oss.str();
+}
+
 // Function to compute Delta R
 float deltaR(const PseudoJet& p1, const PseudoJet& p2) {
   float dphi = std::abs(p1.phi() - p2.phi());
@@ -25,19 +34,25 @@ float deltaR(const PseudoJet& p1, const PseudoJet& p2) {
 
  
 int main(int argc, char* argv[]) {
+    
     // Number of events
-    int nEvents = 10;
+    int nEvents = 6000;
 
     //Check if a .cmnd file is provided + allows for the .cmnd file to be accepted as an argument
     if (argc < 2) {
         cerr << "Usage: " << argv[0] << " <config.cmnd>" << endl;
         return 1;
     } 
-  
-    TFile *out = new TFile("pythia_pp_eec_07112025.root", "jetRadius_0.8");
+    
+    TFile *out = new TFile("../rootFiles/pythia_pp_eec_07132025.root", "RECREATE");
+    if(!out){
+    	cout << "This directory does not exist. Code will not be executed." << endl;
+	return 1;
+    }
+
     out->cd();
     
-    cout << "created pythia_pp_eec_07112025.root!" << endl;
+    cout << "Created rootFiles/pythia_pp_eec_07132025.root" << endl;
     
     Pythia pythia;
     
@@ -66,23 +81,23 @@ int main(int argc, char* argv[]) {
     string histtitle;
     string pcutname;
     string pcuttitle;
-    TH2F* hists[v1.size()];
+    TH2F* hists[jetPtCut.size()-1][v1.size()];
     //TH2F* charged_hist[0];
     TH2F* pcut_hists[pcut.size()];
-    TH2F* pcutregent[v1.size()][pcut.size()];
+    TH2F* pcutregent[jetPtCut.size()-1][v1.size()][pcut.size()];
 
-   for(int iJetPt = 1; iJetPt <= jetPtCut.size(); iJetPt + 2){
+   for(int iJetPt = 0; iJetPt < jetPtCut.size() - 1; iJetPt++){
     for(int i = 0; i < v1.size(); i++){
-        histname = "Charged_E" + to_string(v1[i]) + "_" + to_string(jetPtCut[iJetPt-1]) + "-" + to_string(jetPtCut[iJetPt]);
-        histtitle = "Charged E" + to_string(v1[i]) + ", Jet pT: " + to_string(jetPtCut[iJetPt-1]) + "-" + to_string(jetPtCut[iJetPt]) + " histogram" ;
-        hists[i] = new TH2F(histname.c_str(), histtitle.c_str(), 32, 0, 1.0, 32, 0, 1.0);
-        cout << histname << "created" << endl;
+        histname = "Charged_E" + to_string(v1[i]) + "_" + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1]);
+        histtitle = "Charged E" + to_string(v1[i]) + ", Jet pT: " + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1]) + " histogram" ;
+        hists[iJetPt][i] = new TH2F(histname.c_str(), histtitle.c_str(), 32, 0, 1.0, 32, 0, 1.0);
+        cout << histname << " created" << endl;
         
         for(int j = 0; j < pcut.size(); j++){
-            pcutname = "trackPt_" + to_string(pcut[j]) + "jetPt_" + to_string(jetPtCut[iJetPt-1]) + "-" + to_string(jetPtCut[iJetPt]) + "_Charged_E" + to_string(v1[i]);
-            pcuttitle = "trackPt >= " + to_string(pcut[j]) + ", Jet pT: " + to_string(jetPtCut[iJetPt-1]) + "-" + to_string(jetPtCut[iJetPt])+ ", Charged E" + to_string(v1[i]) + " histogram";
-            pcutregent[i][j] = new TH2F(pcutname.c_str(), pcuttitle.c_str(), 32, 0, 1.0, 32, 0, 1.0);
-            cout << pcutname << "created" << endl;
+            pcutname = "trackPt_" + floatToString(pcut[j]) + "_jetPt_" + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1]) + "_Charged_E" + to_string(v1[i]);
+            pcuttitle = "trackPt >= " + floatToString(pcut[j]) + ", Jet pT: " + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1])+ ", Charged E" + to_string(v1[i]) + " histogram";
+            pcutregent[iJetPt][i][j] = new TH2F(pcutname.c_str(), pcuttitle.c_str(), 32, 0, 1.0, 32, 0, 1.0);
+            cout << pcutname << " created" << endl;
         
             } // Track pT
           } // Weight exponent
@@ -122,11 +137,10 @@ int main(int argc, char* argv[]) {
         // Require atleast one jet
         if (jets.size() < 1) 
             continue;
-        
+
         //Jet pT cut
-	for(int iJetPt = 1; iJetPt <= jetPtCut.size(); iJetPt + 2){
-        if(jets.at(0).pt() < iJetPt-1 || jets.at(0).pt() < iJetPt) 
-            continue;
+	for(int iJetPt = 0; iJetPt < jetPtCut.size() - 1; iJetPt++){
+        if(jets.at(0).pt() < jetPtCut[iJetPt] || jets.at(0).pt() > jetPtCut[iJetPt+1]) {continue;}
         
         vector<fastjet::PseudoJet> jet_constituents = jets.at(0).constituents();
         vector<fastjet::PseudoJet> neutral_constituents = neutral_jets.at(0).constituents();
@@ -149,9 +163,9 @@ int main(int argc, char* argv[]) {
         }
 
         for(int k = 0; k < v1.size(); k++){
-            for (size_t i = 0; i < charged_rad.size(); ++i) {
-                for (size_t j = i + 1; j < charged_rad.size(); ++j) {
-		    for(size_t m = j + 1; j < charged_rad.size(); ++m) {
+            for (size_t i = 0; i < charged_rad.size(); i++) {
+                for (size_t j = i + 1; j < charged_rad.size(); j++) {
+		    for(size_t m = j + 1; m < charged_rad.size(); m++) {
                     
                     if (charged_rad.at(i).pt() > 1 && charged_rad.at(j).pt() > 1 && charged_rad.at(m).pt() > 1){
                         float eec = pow(charged_rad.at(i).pt(), v1[k]) * pow(charged_rad.at(j).pt(), v1[k]) * pow(charged_rad.at(m).pt(), v1[k]); // These powers are different than Jussi's - doesn't matter bc I'm just doing 1 rn
@@ -176,15 +190,16 @@ int main(int argc, char* argv[]) {
 			float yCoord = TMath::Sqrt((projRM * projRM) - (xCoord * xCoord));
                         
 			// Epow Epow filling
-                        hists[k]->Fill(xCoord, yCoord, eec);
-                        
+                        hists[iJetPt][k]->Fill(xCoord, yCoord, eec);
+                       
                         const double& crpti = charged_rad.at(i).pt();
                         const double& crptj = charged_rad.at(j).pt();
                         const double& crptm = charged_rad.at(m).pt();
         
+			
 			for(int iTrackPt = 0; iTrackPt < pcut.size(); iTrackPt++){
 				if (crpti >= pcut[iTrackPt] && crptj >= pcut[iTrackPt] && crptm >= pcut[iTrackPt]){
-	                            pcutregent[k][iTrackPt]->Fill(xCoord, yCoord, eec);
+	                            pcutregent[iJetPt][k][iTrackPt]->Fill(xCoord, yCoord, eec);
 	                            }
 			}
 
@@ -192,12 +207,15 @@ int main(int argc, char* argv[]) {
 			xCoord = 1 -((1 - (projRS * projRS) + (projRM * projRM)) / 2); // x' = 1 - x
 			
 			// Epow Epow filling
-                        hists[k]->Fill(xCoord, yCoord, eec);
+                        hists[iJetPt][k]->Fill(xCoord, yCoord, eec);
                         
 			for(int iTrackPt = 0; iTrackPt < pcut.size(); iTrackPt++){
+				if ((crpti <= 1.0)  && (crptj <= 1.0) && (crptm <= 1.0)){ 
+			  		cout << Form("%lf, %lf, %lf", crpti, crptj, crptm) << endl;}
 				if (crpti >= pcut[iTrackPt] && crptj >= pcut[iTrackPt] && crptm >= pcut[iTrackPt]){
-	                            pcutregent[k][iTrackPt]->Fill(xCoord, yCoord, eec);
-	                            }
+			  	    //cout << Form("%d, %d, %d", crpti, crptj, crptm) << endl;
+	                            pcutregent[iJetPt][k][iTrackPt]->Fill(xCoord, yCoord, eec);
+				    }
 			}
 
                         
@@ -220,6 +238,15 @@ int main(int argc, char* argv[]) {
     
     out->Write();
   
+    // Hist debugging
+    for(int iJetPt = 0; iJetPt < jetPtCut.size() - 1; iJetPt++){
+    	for(int i = 0; i < v1.size(); i++){
+	  for(int iTrackPt = 0; iTrackPt < pcut.size(); iTrackPt++){
+   		 cout << pcutregent[iJetPt][i][iTrackPt]->GetName() << ": " << pcutregent[iJetPt][i][iTrackPt]->GetEntries() << endl;
+    }
+    }
+    }
+
     //Pythia cleanup
     pythia.stat();
     out->Close();
