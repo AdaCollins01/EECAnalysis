@@ -8,6 +8,7 @@
 #include "TH2.h"
 #include "TMath.h"
 #include "TVirtualPad.h"
+#include "TParameter.h"
 #include "TApplication.h"
 #include "TFile.h"
 #include "Pythia8/Pythia.h"
@@ -35,8 +36,11 @@ float deltaR(const PseudoJet& p1, const PseudoJet& p2) {
  
 int main(int argc, char* argv[]) {
     
+    // Set default for histograms
+    TH1::SetDefaultSumw2();
+
     // Number of events
-    int nEvents = 6000;
+    int nEvents = 1000;
 
     //Check if a .cmnd file is provided + allows for the .cmnd file to be accepted as an argument
     if (argc < 2) {
@@ -44,7 +48,8 @@ int main(int argc, char* argv[]) {
         return 1;
     } 
     
-    TFile *out = new TFile("../rootFiles/pythia_pp_eec_07132025.root", "RECREATE");
+    bool isDire = false;
+    TFile *out = new TFile("../rootFiles/pythia_pp_eec_simple_1000events_07222025.root", "RECREATE");
     if(!out){
     	cout << "This directory does not exist. Code will not be executed." << endl;
 	return 1;
@@ -52,8 +57,8 @@ int main(int argc, char* argv[]) {
 
     out->cd();
     
-    cout << "Created rootFiles/pythia_pp_eec_07132025.root" << endl;
-    
+    cout << "Created rootFiles/pythia_pp_eec_simple_1000events_07222025.root" << endl;
+
     Pythia pythia;
     
     if (!pythia.readFile(argv[1])) {
@@ -71,35 +76,57 @@ int main(int argc, char* argv[]) {
     vector<int> v1 = {1};
     
     //declare track pt cut vector
-    vector<float> pcut = {0.7, 1.0, 2.0, 3.0, 4.0};
+    vector<float> pcut = {0.7, 1.0, 2.0, 3.0, 4.0}; // Doesn't seem to have any tracks < 1? Hence, All = 0.7 = 1
     
     //declare jet pt cut vector
-    vector<int> jetPtCut = {120, 140, 160, 180, 200};
+    vector<int> jetPtCut = {120, 140, 160, 180, 200, 300, 500, 5000};
    
     //Declare-create histogram variables
     string histname;
     string histtitle;
     string pcutname;
     string pcuttitle;
+    string RLname;
+    string RLtitle;
+
+    int nJets = 0;
     TH2F* hists[jetPtCut.size()-1][v1.size()];
     //TH2F* charged_hist[0];
     TH2F* pcut_hists[pcut.size()];
     TH2F* pcutregent[jetPtCut.size()-1][v1.size()][pcut.size()];
+    TH1F* RLhists[jetPtCut.size()-1][v1.size()][pcut.size()];
 
    for(int iJetPt = 0; iJetPt < jetPtCut.size() - 1; iJetPt++){
     for(int i = 0; i < v1.size(); i++){
         histname = "Charged_E" + to_string(v1[i]) + "_" + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1]);
         histtitle = "Charged E" + to_string(v1[i]) + ", Jet pT: " + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1]) + " histogram" ;
-        hists[iJetPt][i] = new TH2F(histname.c_str(), histtitle.c_str(), 32, 0, 1.0, 32, 0, 1.0);
+        hists[iJetPt][i] = new TH2F(histname.c_str(), histtitle.c_str(), 32, 0, 1.0001, 32, 0, 1.0001);
         cout << histname << " created" << endl;
         
         for(int j = 0; j < pcut.size(); j++){
             pcutname = "trackPt_" + floatToString(pcut[j]) + "_jetPt_" + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1]) + "_Charged_E" + to_string(v1[i]);
             pcuttitle = "trackPt >= " + floatToString(pcut[j]) + ", Jet pT: " + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1])+ ", Charged E" + to_string(v1[i]) + " histogram";
-            pcutregent[iJetPt][i][j] = new TH2F(pcutname.c_str(), pcuttitle.c_str(), 32, 0, 1.0, 32, 0, 1.0);
+            pcutregent[iJetPt][i][j] = new TH2F(pcutname.c_str(), pcuttitle.c_str(), 32, 0, 1.0001, 32, 0, 1.0001);
             cout << pcutname << " created" << endl;
-        
-            } // Track pT
+            
+	    RLname = string("RL") + "trackPt_" + floatToString(pcut[j]) + "_jetPt_" + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1]) + "_Charged_E" + to_string(v1[i]);
+            RLtitle = "trackPt >= " + floatToString(pcut[j]) + ", Jet pT: " + to_string(jetPtCut[iJetPt]) + "-" + to_string(jetPtCut[iJetPt+1])+ ", Charged E" + to_string(v1[i]) + " histogram";
+            
+	// Logarithmic deltaR binning for energy-energy correlator histograms
+	  const Int_t nDeltaRBinsEEC = 32;
+	  const Double_t minDeltaREEC = 0;
+	  const Double_t maxDeltaREEC = 0.8;
+	  const Double_t binnerShift = 0.01;
+	  const Double_t deltaRlogBinWidth = (TMath::Log(maxDeltaREEC+binnerShift) - TMath::Log(minDeltaREEC+binnerShift)) / nDeltaRBinsEEC;
+	  Double_t deltaRBinsEEC[nDeltaRBinsEEC+1];
+	  for(int iDeltaR = 0; iDeltaR <= nDeltaRBinsEEC; iDeltaR++){
+	    deltaRBinsEEC[iDeltaR] = (minDeltaREEC+binnerShift)*TMath::Exp(iDeltaR*deltaRlogBinWidth)-binnerShift;
+	  }
+
+	    RLhists[iJetPt][i][j] = new TH1F(RLname.c_str(), RLtitle.c_str(), nDeltaRBinsEEC, deltaRBinsEEC);
+	    cout << RLname << "created" << endl;
+            
+	    } // Track pT
           } // Weight exponent
       } // Jet pt
 
@@ -138,7 +165,10 @@ int main(int argc, char* argv[]) {
         if (jets.size() < 1) 
             continue;
 
-        //Jet pT cut
+	// Save number of jets
+	nJets += jets.size();
+        
+	//Jet pT cut
 	for(int iJetPt = 0; iJetPt < jetPtCut.size() - 1; iJetPt++){
         if(jets.at(0).pt() < jetPtCut[iJetPt] || jets.at(0).pt() > jetPtCut[iJetPt+1]) {continue;}
         
@@ -170,6 +200,8 @@ int main(int argc, char* argv[]) {
                     if (charged_rad.at(i).pt() > 1 && charged_rad.at(j).pt() > 1 && charged_rad.at(m).pt() > 1){
                         float eec = pow(charged_rad.at(i).pt(), v1[k]) * pow(charged_rad.at(j).pt(), v1[k]) * pow(charged_rad.at(m).pt(), v1[k]); // These powers are different than Jussi's - doesn't matter bc I'm just doing 1 rn
 
+			if(isDire) {eec *= pythia.info.weight();} // DIRE showers need to be weighted
+
 			// Determine RL, RM, RS
                         float deltaR12 = charged_rad.at(i).delta_R(charged_rad.at(j));
                         float deltaR13 = charged_rad.at(i).delta_R(charged_rad.at(m));
@@ -200,7 +232,8 @@ int main(int argc, char* argv[]) {
 			for(int iTrackPt = 0; iTrackPt < pcut.size(); iTrackPt++){
 				if (crpti >= pcut[iTrackPt] && crptj >= pcut[iTrackPt] && crptm >= pcut[iTrackPt]){
 	                            pcutregent[iJetPt][k][iTrackPt]->Fill(xCoord, yCoord, eec);
-	                            }
+	                            RLhists[iJetPt][k][iTrackPt]->Fill(RL, eec); // Only needs to be filled once per EEEC
+				    }
 			}
 
 			// Fill again with xCoord flipped over x=0.5
@@ -210,10 +243,7 @@ int main(int argc, char* argv[]) {
                         hists[iJetPt][k]->Fill(xCoord, yCoord, eec);
                         
 			for(int iTrackPt = 0; iTrackPt < pcut.size(); iTrackPt++){
-				if ((crpti <= 1.0)  && (crptj <= 1.0) && (crptm <= 1.0)){ 
-			  		cout << Form("%lf, %lf, %lf", crpti, crptj, crptm) << endl;}
 				if (crpti >= pcut[iTrackPt] && crptj >= pcut[iTrackPt] && crptm >= pcut[iTrackPt]){
-			  	    //cout << Form("%d, %d, %d", crpti, crptj, crptm) << endl;
 	                            pcutregent[iJetPt][k][iTrackPt]->Fill(xCoord, yCoord, eec);
 				    }
 			}
@@ -235,18 +265,13 @@ int main(int argc, char* argv[]) {
 //        }
    
    } //Event loop close
-    
-    out->Write();
-  
-    // Hist debugging
-    for(int iJetPt = 0; iJetPt < jetPtCut.size() - 1; iJetPt++){
-    	for(int i = 0; i < v1.size(); i++){
-	  for(int iTrackPt = 0; iTrackPt < pcut.size(); iTrackPt++){
-   		 cout << pcutregent[iJetPt][i][iTrackPt]->GetName() << ": " << pcutregent[iJetPt][i][iTrackPt]->GetEntries() << endl;
-    }
-    }
-    }
+   
+    TParameter<int> numJets("numJets", nJets);
+    numJets.Write();
 
+    out->Write();
+    cout << "File has been written!" << endl;
+  
     //Pythia cleanup
     pythia.stat();
     out->Close();
