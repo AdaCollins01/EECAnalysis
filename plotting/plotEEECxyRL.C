@@ -16,10 +16,6 @@ void plotEEECxyRL(){
   bool normalizeArea = false; // Normalizes area to be 1. Otherwise, normalizes by NJets
   bool allRL = false;
   bool stackJetPt = true; // Puts all jet pt curves on same plot 
-  bool stackFiles = false; // Allows input from several different files on the same plot 
-  bool partonShower = false;
-  bool dataSource = false;
-  bool validation = false;
 
 
   TString dateFileString = "07242025";
@@ -52,29 +48,6 @@ void plotEEECxyRL(){
 //  comparedTrackPtBin.push_back(3.0);
 //  comparedTrackPtBin.push_back(4.0);
 
-  std::vector<char*> comparedFiles;
-  if(partonShower && !validation){
-  }
-  if(dataSource){
-  	if(unique){
-	comparedFiles.push_back("ppMC2017/justPythia/projected_xyPlane_justPythia_RL-M-S-Full_AllTriangles_07232025.root");
-	comparedFiles.push_back("ppMC2017/pythiaGeant/projected_xyPlane_pythiaGeant_RL-M-S-Full_AllTriangles_07232025.root");
-	comparedFiles.push_back("pp2017/projected_xyPlane_CMS_RL-M-S-Full_AllTriangles_07232025.root");
-	} else {
-	comparedFiles.push_back("ppMC2017/justPythia/projected_xyPlane_justPythia_RL-M-S-Full_AllTriangles_07232025.root");
-	comparedFiles.push_back("ppMC2017/pythiaGeant/projected_xyPlane_pythiaGeant_RL-M-S-Full_AllTriangles_07232025.root");
-	comparedFiles.push_back("pp2017/projected_xyPlane_CMS_RL-M-S-Full_AllTriangles_07232025.root");
-	}
-  }
-  if(validation){
-  }
-  
-
- // Checkpoint
- if(stackFiles && stackJetPt || stackFiles && comparedJetPtBin.size() > 1){
- 	cout << "Are you trying to stack files? Multiple jet pt options are selected." << endl;
-	return;
- }
 
   // ====================================================
   // Loop through characteristics
