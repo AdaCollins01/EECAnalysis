@@ -21,7 +21,6 @@ void plotEEECxyStackedRL(){
   bool partonShower = false; // Compares Simple, DIRE, VINCIA 
   bool dataSource = true; // Compares justPythia, pythiaGeant, CMS
   bool validation = false; // Compares parton showers to CMS
-  bool compUnique = true;
 
   if(partonShower + dataSource > 1 || dataSource + validation > 1) { 
   	cout << "Please select either partonShower, dataSource, or validation." << endl;
@@ -53,8 +52,6 @@ void plotEEECxyStackedRL(){
  // Declarations necessary for plotting later
  std::vector<TH1D*> closureDataSource;
  std::vector<const char*> closureDataLabels;
- std::vector<TH1D*> closureUniqueAll;
- std::vector<const char*> closureUniqueAllLabels;
  std::vector<TH1D*> closurePartonShower;
  std::vector<const char*> closurePartonShowerLabels;
  std::vector<TH1D*> closureValidation;
@@ -67,10 +64,6 @@ void plotEEECxyStackedRL(){
         k = 0;
 	for(auto trackPtBin : comparedTrackPtBin){
 
-  	int loop = 0;
-	while(loop < 2){
-	if(loop == 0) {unique = true;}
-	if(loop == 1) {unique = false;}
 	if(dataSource){
 //  	  TString inputFileJustPythia = "ppMC2017/justPythia/jetRadius_0.8/projected_xyPlane_RL-All_06302025.root"; 
 //	  TString inputFilePythiaGeant = "ppMC2017/pythiaGeant/projected_xyPlane_Geant_RL-All_07182025.root"; 
@@ -202,22 +195,7 @@ void plotEEECxyStackedRL(){
 	closureDataLabels.push_back("Pythia-Geant");
 	closureDataLabels.push_back("CMS");		
         
-	closureUniqueAll.push_back(projEEECJustPythia);
-	closureUniqueAll.push_back(projEEECPythiaGeant);
-	closureUniqueAll.push_back(projEEECCMS);
-
 	}
-
-      loop += 1;
-      
-      }
-
-      closureUniqueAllLabels.push_back("Pythia - Unique");
-      closureUniqueAllLabels.push_back("Geant - Unique");
-      closureUniqueAllLabels.push_back("CMS - Unique");
-      closureUniqueAllLabels.push_back("Pythia - All");
-      closureUniqueAllLabels.push_back("Geant - All");
-      closureUniqueAllLabels.push_back("CMS - All");
 
       if(partonShower){
 
@@ -381,7 +359,6 @@ void plotEEECxyStackedRL(){
 	  else { commentFileString += "_allTriangles";}
 	  if(partonShower && !validation) {commentFileString += "_partonShowers";}
 	  if(dataSource) {commentFileString += "_dataSource";}
-	  if(compUnique) {commentFileString += "uniqueAll";}
 	  if(validation) {commentFileString += "_validation";}
 	  TString logFileString = "";
 	  if(logAxis) {logFileString = "_logAxis";}
@@ -392,35 +369,13 @@ void plotEEECxyStackedRL(){
 	
 	TLegend *legend;
 	if(partonShower && !validation) {legend = new TLegend(0.83,0.38,1.01,0.67);}
-	if(dataSource || compUnique) {legend = new TLegend(0.81,0.38,0.99,0.69);}
+	if(dataSource) {legend = new TLegend(0.81,0.38,0.99,0.69);}
 	
 	if(validation) {legend = new TLegend(0.81,0.38,0.99,0.72);}
 	
 	legend->SetBorderSize(0);
         legend->SetFillStyle(0); 
 	
-	if(compUnique){
-
-		legend->SetHeader("Data Sources", "c");
-
-		closureUniqueAll[0]->SetMaximum(11);
-		for(int iHist = 0; iHist < closureUniqueAll.size(); iHist ++){
-	   	   closureUniqueAll[iHist]->SetLineColor(color[iHist]);
-                   closureUniqueAll[iHist]->SetMarkerStyle(markerStyle[iHist]);
-                   closureUniqueAll[iHist]->SetMarkerColor(color[iHist]);
-                   closureUniqueAll[iHist]->SetLineWidth(1);
-		   closureUniqueAll[iHist]->GetXaxis()->SetRangeUser(0.008, 0.39);
-		   if(iHist == 0){
-		   	drawer->DrawHistogram(closureUniqueAll[iHist], "R_{L}", "EEEC", ptTitleString);
-		   } else {
-		        closureUniqueAll[iHist]->Draw("SAME");
-		   }
-
-		  TString legendEntry = Form("%s", closureUniqueAllLabels.at(iHist));
-		  legend->AddEntry(closureUniqueAll[iHist], legendEntry, "p");
-		
-		}
-	}
 
 	if(partonShower && !validation){
 
@@ -453,7 +408,7 @@ void plotEEECxyStackedRL(){
 		}
 	}
 	
-	if(dataSource && !compUnique){
+	if(dataSource){
 
 		double globalMin = 1000000.0;
 		for(auto hist : closureDataSource) {
